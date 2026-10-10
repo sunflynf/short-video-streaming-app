@@ -1,0 +1,207 @@
+# Short Video Streaming App
+
+A TikTok-style short video social app focused on:
+- short-form video discovery
+- vertical video playback
+- creator profiles and follow system
+- likes, comments, shares
+- fast content ingestion and streaming
+- personalized feed
+
+This project is intended as an MVP blueprint for building a short-form video platform with modern mobile and backend stack.
+
+## Product Idea
+
+A mobile-first platform where users can:
+- upload short videos (15s–60s)
+- watch a personalized feed
+- like/comment/share content
+- follow creators
+- discover trending topics
+- interact with other users
+
+The app should support:
+- low-latency playback
+- adaptive bitrate streaming
+- fast content ingestion
+- global content delivery
+- engagement metrics for creators
+
+## Core Goals
+
+1. Create a smooth short-video experience
+2. Support scalable content upload and delivery
+3. Deliver personalized feeds using engagement signals
+4. Build creator-focused features
+5. Make the platform extensible for future live-streaming features
+
+## Target User Experience
+
+- Open the app and see a vertical feed
+- Swipe between short videos
+- like, comment, or follow quickly
+- upload a short clip in a few taps
+- get personalized recommendations
+
+## MVP Features (Phase 1 & 2)
+
+### Phase 1: Foundation (Weeks 1-4)
+- User authentication (sign up, login, password reset)
+- Basic user profile
+- Upload short video clips
+- Video transcoding to HLS
+- Watch feed with vertical swipe
+- Like/unlike videos
+- Follow/unfollow creators
+
+### Phase 2: Social (Weeks 5-8)
+- Comments and replies
+- Share videos
+- Creator dashboard with stats
+- Search and trending section
+- User notifications
+- Feed ranking algorithm
+
+## Suggested Tech Stack
+
+### Frontend / Mobile
+- React Native + Expo
+- TypeScript
+- Redux or Zustand for state management
+
+### Backend
+- NestJS + TypeScript
+- Fastify as HTTP framework (optional)
+- Prisma ORM
+- PostgreSQL
+
+### Authentication
+- Clerk or Supabase Auth
+
+### Database
+- PostgreSQL for relational data
+- Redis for caching and rate limiting
+
+### Media & Streaming
+- Mux or Cloudflare Stream for transcoding and adaptive streaming
+- Cloudflare R2 or AWS S3 for storage
+
+### Real-Time
+- Socket.IO for real-time interactions (likes, comments, presence)
+- Supabase Realtime (optional)
+
+### Background Jobs
+- Redis + BullMQ for async video processing and notifications
+
+### Deployment
+- Vercel for web dashboard
+- Railway or Fly.io for backend
+- Managed PostgreSQL (Railway, Supabase)
+- Managed Redis (Upstash)
+
+## Project Timeline
+
+See [TIMELINE.md](./TIMELINE.md) for detailed development phases.
+
+## Architecture
+
+See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structure.
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- PostgreSQL
+- Redis
+
+### Installation
+
+```bash
+git clone https://github.com/sunflynf/short-video-streaming-app.git
+cd short-video-streaming-app
+
+# Backend setup
+cd backend
+npm install
+cp .env.example .env
+npx prisma migrate dev
+npm run start:dev
+
+# Mobile setup (in separate terminal)
+cd ../mobile
+npm install
+npm start
+```
+
+### Environment Variables
+
+See `.env.example` files in backend and mobile directories.
+
+## Features by Phase
+
+### Phase 1: MVP Foundation
+- ✅ User management and auth
+- ✅ Video upload API
+- ✅ Video streaming (HLS)
+- ✅ Feed with basic ranking
+- ✅ Like/unlike
+- ✅ Follow/unfollow
+- ✅ Basic mobile app UI
+
+### Phase 2: Social Features
+- ✅ Comments and replies
+- ✅ Share functionality
+- ✅ User notifications
+- ✅ Creator dashboard
+- ✅ Search and trending
+- ✅ Video recommendations
+
+### Phase 3: Advanced Features
+- 🔄 Live streaming
+- 🔄 Duet/remix features
+- 🔄 Creator monetization
+- 🔄 Advanced recommendation engine (ML)
+- 🔄 Creator tools and analytics
+
+## Deployment
+
+### Backend
+- Deploy to Railway or Fly.io
+- Use managed PostgreSQL
+- Use Upstash for Redis
+
+### Mobile
+- Build APK/IPA with EAS Build (Expo)
+- Deploy to Google Play and App Store
+
+### Web Dashboard
+- Deploy to Vercel
+
+## Contributing
+
+Solo development for MVP phase. Open to contributions after MVP launch.
+
+## License
+
+MIT
+
+## Notes
+
+This repository is designed for solo developer MVP speed. It prioritizes:
+- Fast initial development
+- Managed services over self-hosted infrastructure
+- Simple architecture over premature scaling
+- Working product over perfect code
+
+Next steps after MVP:
+- User testing and feedback
+- Performance optimization
+- Content moderation system
+- Creator monetization
+
+---
+
+**Status:** Phase 1 - Foundation (in development)
+
+**Last Updated:** 2026-10-10
