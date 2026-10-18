@@ -26,17 +26,30 @@ export class VideosService {
     return dto!;
   }
 
-  /** Maps rows to DTOs, filling `likedByMe` for the viewer with a single query. */
+  /** Maps rows to DTOs, filling `likedByMe` and `followingAuthor` with one query each. */
   async toDtos(rows: VideoRow[], viewerId?: string): Promise<VideoDto[]> {
     const liked = new Set<string>();
+    const followed = new Set<string>();
     if (viewerId && rows.length) {
-      const likes = await this.prisma.like.findMany({
-        where: { userId: viewerId, videoId: { in: rows.map((r) => r.id) } },
-        select: { videoId: true },
-      });
+      const [likes, follows] = await Promise.all([
+        this.prisma.like.findMany({
+          where: { userId: viewerId, videoId: { in: rows.map((r) => r.id) } },
+          select: { videoId: true },
+        }),
+        this.prisma.follow.findMany({
+          where: {
+            followerId: viewerId,
+            followingId: { in: [...new Set(rows.map((r) => r.authorId))] },
+          },
+          select: { followingId: true },
+        }),
+      ]);
       for (const like of likes) liked.add(like.videoId);
+      for (const follow of follows) followed.add(follow.followingId);
     }
-    return rows.map((row) => toVideoDto(row, this.media, liked.has(row.id)));
+    return rows.map((row) =>
+      toVideoDto(row, this.media, liked.has(row.id), followed.has(row.authorId)),
+    );
   }
 
   async update(id: string, actor: AuthUser, dto: UpdateVideoDto): Promise<VideoDto> {

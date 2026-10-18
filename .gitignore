@@ -12,6 +12,7 @@ coverage/
 # Expo
 .expo/
 web-build/
+dist-web/
 expo-env.d.ts
 ios/
 android/

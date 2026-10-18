@@ -34,3 +34,20 @@ export type UpdateUserRequest = {
 export type FollowResponse = {
   following: boolean;
 };
+
+export const AVATAR_CONTENT_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
+export type AvatarContentType = (typeof AVATAR_CONTENT_TYPES)[number];
+export const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
+
+export type AvatarUploadRequest = {
+  contentType: AvatarContentType;
+  /** Exact size in bytes; the presigned URL only accepts this length. */
+  contentLength: number;
+};
+
+export type AvatarUploadResponse = {
+  /** PUT the image here with the same Content-Type and Content-Length. Expires in 5 minutes. */
+  uploadUrl: string;
+  /** Then save this as `avatarUrl` with PATCH /users/:id. */
+  publicUrl: string;
+};

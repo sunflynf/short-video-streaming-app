@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module.js';
+import { AvatarsModule } from './avatars/avatars.module.js';
 import { CommentsModule } from './comments/comments.module.js';
 import { validateEnv, type Env } from './config/env.js';
 import { FeedModule } from './feed/feed.module.js';
@@ -30,6 +31,7 @@ import { VideosModule } from './videos/videos.module.js';
     PrismaModule,
     RedisModule,
     HealthModule,
+    AvatarsModule,
     AuthModule,
     UsersModule,
     FollowsModule,

@@ -23,6 +23,12 @@ const envSchema = z.object({
   FEED_WINDOW_DAYS: z.coerce.number().positive().default(14),
   FEED_SNAPSHOT_TTL_SEC: z.coerce.number().int().positive().default(1800),
   ANON_FEED_CACHE_SEC: z.coerce.number().int().positive().default(60),
+  // Cloudflare R2 for avatars. Optional: without it, avatar uploads return 503.
+  R2_ACCOUNT_ID: optionalString,
+  R2_ACCESS_KEY_ID: optionalString,
+  R2_SECRET_ACCESS_KEY: optionalString,
+  R2_BUCKET: optionalString,
+  R2_PUBLIC_URL: z.preprocess((v) => (v === '' ? undefined : v), z.url().optional()),
   /** Base URL for share links (`${PUBLIC_WEB_URL}/v/:id`). */
   PUBLIC_WEB_URL: z.url().default('http://localhost:3000'),
 });

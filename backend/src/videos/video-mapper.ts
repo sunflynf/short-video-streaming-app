@@ -22,7 +22,12 @@ export const videoSelect = {
 
 export type VideoRow = Prisma.VideoGetPayload<{ select: typeof videoSelect }>;
 
-export function toVideoDto(row: VideoRow, media: MediaProvider, likedByMe = false): VideoDto {
+export function toVideoDto(
+  row: VideoRow,
+  media: MediaProvider,
+  likedByMe = false,
+  followingAuthor = false,
+): VideoDto {
   const ready = row.status === 'READY' && row.muxPlaybackId;
   return {
     id: row.id,
@@ -36,6 +41,7 @@ export function toVideoDto(row: VideoRow, media: MediaProvider, likedByMe = fals
     commentCount: row.commentCount,
     shareCount: row.shareCount,
     likedByMe,
+    followingAuthor,
     author: toUserSummary(row.author),
     publishedAt: row.publishedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),

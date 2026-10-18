@@ -183,6 +183,17 @@ describe('feed', () => {
   });
 
   describe('Following', () => {
+    it('marks videos whose author the viewer follows', async () => {
+      await createReadyVideo(app, ben.user.id);
+      await createReadyVideo(app, cat.user.id);
+      await http().post(`/v1/users/${ben.user.id}/follow`).set(bearer(ann)).expect(200);
+      const page = await feed(ann);
+      expect(
+        Object.fromEntries(page.items.map((v) => [v.author.username, v.followingAuthor])),
+      ).toEqual({ ben: true, cat: false });
+      expect((await feed()).items.every((v) => !v.followingAuthor)).toBe(true);
+    });
+
     it('lists followed creators newest first, with paging', async () => {
       await http().post(`/v1/users/${ben.user.id}/follow`).set(bearer(ann)).expect(200);
       const older = await createReadyVideo(app, ben.user.id, { publishedAt: hoursAgo(5) });

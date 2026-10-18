@@ -8,3 +8,9 @@ process.env.NODE_ENV = 'test';
 process.env.MUX_TOKEN_ID = 'test-token-id';
 process.env.MUX_TOKEN_SECRET = 'test-token-secret';
 process.env.MUX_WEBHOOK_SECRET = 'test-webhook-secret';
+// Avatar presigning is local (no network), so dummy R2 credentials exercise the real code.
+process.env.R2_ACCOUNT_ID = 'test-account';
+process.env.R2_ACCESS_KEY_ID = 'test-key';
+process.env.R2_SECRET_ACCESS_KEY = 'test-secret';
+process.env.R2_BUCKET = 'test-avatars';
+process.env.R2_PUBLIC_URL = 'https://avatars.example.com';

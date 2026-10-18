@@ -1,6 +1,13 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { MeProfile, UserProfile } from '@app/shared';
 import type { Prisma } from '../generated/prisma/client.js';
+import { isOwnAvatarUrl } from '../avatars/avatar-key.js';
+import { AvatarsService } from '../avatars/avatars.service.js';
 import type { AuthUser } from '../common/auth-user.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { UpdateUserDto } from './dto/update-user.dto.js';
@@ -8,7 +15,10 @@ import { meProfileSelect, toMeProfile, toUserProfile, userProfileSelect } from '
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly avatars: AvatarsService,
+  ) {}
 
   async getProfile(where: Prisma.UserWhereUniqueInput, viewer?: AuthUser): Promise<UserProfile> {
     const user = await this.prisma.user.findUnique({ where, select: userProfileSelect });
@@ -28,6 +38,11 @@ export class UsersService {
   async update(id: string, actor: AuthUser, dto: UpdateUserDto): Promise<MeProfile> {
     if (actor.id !== id && actor.role !== 'ADMIN') {
       throw new ForbiddenException('You can only edit your own profile');
+    }
+    // With R2 configured, avatars must come from our own upload flow (no third-party URLs).
+    const base = this.avatars.publicBaseUrl;
+    if (dto.avatarUrl && base && this.avatars.enabled && !isOwnAvatarUrl(dto.avatarUrl, base)) {
+      throw new BadRequestException('avatarUrl must come from POST /users/me/avatar-upload-url');
     }
     const user = await this.prisma.user.update({
       where: { id },
