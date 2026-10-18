@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+dist
+coverage
+.expo
+backend/src/generated
+backend/prisma/migrations
+*.md
+apps/mobile/assets

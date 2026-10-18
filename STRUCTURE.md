@@ -1,5 +1,7 @@
 # Project Structure and Suggested Tech Stack
 
+> Stack options below are narrowed to concrete MVP choices in [docs/decisions.md](./docs/decisions.md); build steps live in [docs/plans/](./docs/plans/README.md).
+
 This project is designed as a short-video social app inspired by TikTok, optimized for a solo developer MVP.
 
 ## Recommended Monorepo Layout
@@ -20,6 +22,11 @@ short-video-streaming-app/
 │       ├── src/
 │       ├── app/
 │       ├── components/
+│       └── package.json
+│
+├── packages/
+│   └── shared/          # shared TS types / API DTOs (@app/shared)
+│       ├── src/
 │       └── package.json
 │
 ├── backend/
@@ -84,6 +91,8 @@ short-video-streaming-app/
 │   └── docker-compose.yml
 │
 ├── docs/
+│   ├── decisions.md
+│   ├── plans/
 │   ├── architecture.md
 │   ├── api.md
 │   ├── media-pipeline.md
@@ -171,7 +180,7 @@ short-video-streaming-app/
 - follows
 - notifications
 - uploads
-- streaming
+- media (Mux provider + webhook processing; replaces a separate `streaming` module)
 - admin (later)
 
 ### Mobile App Screens

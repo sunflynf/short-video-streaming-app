@@ -86,6 +86,8 @@ The app should support:
 - Mux or Cloudflare Stream for transcoding and adaptive streaming
 - Cloudflare R2 or AWS S3 for storage
 
+> The MVP locks in specific choices from the options above (JWT auth in NestJS, Mux, R2 for avatars, Zustand + TanStack Query). See [docs/decisions.md](./docs/decisions.md).
+
 ### Real-Time
 - Socket.IO for real-time interactions (likes, comments, presence)
 - Supabase Realtime (optional)
@@ -101,19 +103,18 @@ The app should support:
 
 ## Project Timeline
 
-See [TIMELINE.md](./TIMELINE.md) for detailed development phases.
+See [TIMELINE.md](./TIMELINE.md) for detailed development phases and [docs/plans/](./docs/plans/README.md) for the actionable per-phase work plans.
 
 ## Architecture
 
-See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structure.
+See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structure. Security posture (authorization table, limits, audit): [docs/security.md](./docs/security.md).
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
-- PostgreSQL
-- Redis
+- Node.js 22 (see `.nvmrc`)
+- pnpm 10 (`corepack enable` picks up the pinned version)
+- Docker (runs local PostgreSQL + Redis)
 
 ### Installation
 
@@ -121,24 +122,40 @@ See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structur
 git clone https://github.com/sunflynf/short-video-streaming-app.git
 cd short-video-streaming-app
 
-# Backend setup
-cd backend
-npm install
-cp .env.example .env
-npx prisma migrate dev
-npm run start:dev
+# Local Postgres + Redis
+docker compose up -d
 
-# Mobile setup (in separate terminal)
-cd ../mobile
-npm install
-npm start
+# Install all workspaces (pnpm monorepo)
+pnpm install
+
+# Backend
+cp backend/.env.example backend/.env
+pnpm --filter backend exec prisma migrate dev
+pnpm --filter backend prisma:seed   # 5 demo users, password "password123"
+
+# Mobile
+cp apps/mobile/.env.example apps/mobile/.env
+
+# Run API + Expo together
+pnpm dev
+
+# API health check
+curl http://localhost:3000/v1/health
+# API docs: http://localhost:3000/docs
+
+# Checks (backend e2e uses a separate <db>_test database and Redis db 1)
+pnpm lint && pnpm typecheck && pnpm test
+pnpm --filter backend test:e2e
+pnpm --filter backend test:cov   # unit + e2e with the 70% service coverage gate (as CI runs it)
 ```
 
 ### Environment Variables
 
-See `.env.example` files in backend and mobile directories.
+See `backend/.env.example` and `apps/mobile/.env.example`. Each phase plan lists the variables it introduces. The `MUX_*` keys are optional; without them the API runs, but video uploads return 503. To test real uploads, see [Run it against real Mux](./docs/plans/phase-2-media.md#run-it-against-real-mux).
 
 ## Features by Phase
+
+Legend: ⬜ planned · 🔄 in progress · ✅ done
 
 ### Phase 1: MVP Foundation
 - ✅ User management and auth
@@ -148,32 +165,35 @@ See `.env.example` files in backend and mobile directories.
 - ✅ Like/unlike
 - ✅ Follow/unfollow
 - ✅ Basic mobile app UI
+- ✅ Reporting, blocking, moderation and account deletion
 
 ### Phase 2: Social Features
 - ✅ Comments and replies
 - ✅ Share functionality
 - ✅ User notifications
-- ✅ Creator dashboard
-- ✅ Search and trending
-- ✅ Video recommendations
+- 🔄 Creator dashboard (minimal stats on your own profile)
+- ⬜ Search and trending
+- ⬜ Video recommendations
 
 ### Phase 3: Advanced Features
-- 🔄 Live streaming
-- 🔄 Duet/remix features
-- 🔄 Creator monetization
-- 🔄 Advanced recommendation engine (ML)
-- 🔄 Creator tools and analytics
+- ⬜ Live streaming
+- ⬜ Duet/remix features
+- ⬜ Creator monetization
+- ⬜ Advanced recommendation engine (ML)
+- ⬜ Creator tools and analytics
 
 ## Deployment
 
+The step-by-step launch runbook (accounts, secrets, builds, monitoring, rollback) is in [docs/launch.md](./docs/launch.md).
+
 ### Backend
-- Deploy to Railway or Fly.io
-- Use managed PostgreSQL
-- Use Upstash for Redis
+- Docker image (`backend/Dockerfile`) deployed to Railway (`backend/railway.json`); migrations run before each release
+- Managed PostgreSQL on Railway, Upstash for Redis
+- `main` deploys to staging after CI passes; a `v*` tag deploys to production after approval (`.github/workflows/deploy.yml`)
 
 ### Mobile
-- Build APK/IPA with EAS Build (Expo)
-- Deploy to Google Play and App Store
+- EAS Build profiles `development`, `preview` and `production` (`apps/mobile/eas.json`), plus EAS Update for JS-only fixes
+- TestFlight and Play internal testing first, then the stores
 
 ### Web Dashboard
 - Deploy to Vercel
@@ -202,6 +222,6 @@ Next steps after MVP:
 
 ---
 
-**Status:** Phase 1 - Foundation (in development)
+**Status:** MVP built (Phases 0–7); launch steps that need accounts and devices are in [docs/launch.md](./docs/launch.md)
 
-**Last Updated:** 2026-10-10
+**Last Updated:** 2026-10-18

@@ -1,0 +1,16 @@
+packages:
+  - apps/*
+  - backend
+  - packages/*
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@prisma/engines'
+  - argon2
+  - prisma
+  - unrs-resolver
+
+ignoredBuiltDependencies:
+  - '@scarf/scarf'
+  - esbuild
+  - msgpackr-extract

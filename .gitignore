@@ -1,0 +1,22 @@
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+
+# Expo
+.expo/
+web-build/
+dist-web/
+expo-env.d.ts
+ios/
+android/
+
+# Prisma generated client
+backend/src/generated/
+apps/mobile/play-service-account.json

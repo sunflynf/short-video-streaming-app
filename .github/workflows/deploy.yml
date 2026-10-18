@@ -1,0 +1,40 @@
+name: Deploy
+
+# main → staging automatically (after CI is green).
+# v* tag → production, gated by the "production" GitHub Environment (required reviewers).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: deploy-${{ github.event_name == 'push' && 'production' || 'staging' }}
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - name: Deploy API to Railway (staging)
+        run: npx --yes @railway/cli@4 up --ci --service api --environment staging
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  production:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy API to Railway (production)
+        run: npx --yes @railway/cli@4 up --ci --service api --environment production
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
