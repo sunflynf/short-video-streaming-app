@@ -3,13 +3,16 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module.js';
+import { CommentsModule } from './comments/comments.module.js';
 import { validateEnv, type Env } from './config/env.js';
 import { FeedModule } from './feed/feed.module.js';
 import { FollowsModule } from './follows/follows.module.js';
 import { HealthModule } from './health/health.module.js';
 import { LikesModule } from './likes/likes.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
+import { SharesModule } from './shares/shares.module.js';
 import { UploadsModule } from './uploads/uploads.module.js';
 import { UsersModule } from './users/users.module.js';
 import { VideosModule } from './videos/videos.module.js';
@@ -35,6 +38,9 @@ import { VideosModule } from './videos/videos.module.js';
     FeedModule,
     VideosModule,
     LikesModule,
+    CommentsModule,
+    SharesModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

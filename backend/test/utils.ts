@@ -12,6 +12,7 @@ import { AppModule } from '../src/app.module.js';
 import type { Env } from '../src/config/env.js';
 import { MEDIA_PROVIDER } from '../src/media/media-provider.js';
 import { MEDIA_QUEUE } from '../src/media/media.constants.js';
+import { NOTIFICATIONS_QUEUE } from '../src/notifications/notifications.constants.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { REDIS } from '../src/redis/redis.module.js';
 import { setupApp } from '../src/setup-app.js';
@@ -39,6 +40,9 @@ export const mediaStub = (app: INestApplication) => app.get<StubMuxProvider>(MED
 
 export const mediaQueue = (app: INestApplication) => app.get<Queue>(getQueueToken(MEDIA_QUEUE));
 
+export const notificationsQueue = (app: INestApplication) =>
+  app.get<Queue>(getQueueToken(NOTIFICATIONS_QUEUE));
+
 /** Empties every table touched by the tests, the media queue and the Mux stub's records. */
 export async function resetDb(app: INestApplication): Promise<void> {
   await app
@@ -46,13 +50,14 @@ export async function resetDb(app: INestApplication): Promise<void> {
     .$executeRawUnsafe(
       'TRUNCATE "Notification", "Comment", "Like", "Video", "Follow", "RefreshToken", "User" CASCADE',
     );
-  const queue = mediaQueue(app);
-  await queue.pause();
-  await queue.obliterate({ force: true });
-  await queue.resume();
+  for (const queue of [mediaQueue(app), notificationsQueue(app)]) {
+    await queue.pause();
+    await queue.obliterate({ force: true });
+    await queue.resume();
+  }
   // Feed snapshots, seen sets and view debounce keys (test Redis db only, see setup-env.ts).
   const redis = app.get<Redis>(REDIS);
-  for (const pattern of ['feed:*', 'seen:*', 'view:*']) {
+  for (const pattern of ['feed:*', 'seen:*', 'view:*', 'share:*']) {
     const keys = await redis.keys(pattern);
     if (keys.length) await redis.del(...keys);
   }

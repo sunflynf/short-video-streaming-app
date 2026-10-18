@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Redis } from 'ioredis';
-import { createHash } from 'node:crypto';
 import type { AuthUser } from '../common/auth-user.js';
+import { viewerKey } from '../common/viewer-key.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { REDIS } from '../redis/redis.module.js';
 import { isQualifiedView } from './feed-ranking.js';
@@ -34,9 +34,8 @@ export class ViewsService {
     if (!video) throw new NotFoundException('Video not found');
     if (!isQualifiedView(watchedMs, video.durationSec)) return;
 
-    const viewerKey = viewer ? `u:${viewer.id}` : `ip:${hashIp(ip ?? 'unknown')}`;
     const first = await this.redis.set(
-      `view:${viewerKey}:${videoId}`,
+      `view:${viewerKey(viewer, ip)}:${videoId}`,
       '1',
       'EX',
       VIEW_DEBOUNCE_SEC,
@@ -50,9 +49,4 @@ export class ViewsService {
     }
     if (viewer) await this.seen.add(viewer.id, videoId);
   }
-}
-
-/** Raw IPs never reach Redis. */
-function hashIp(ip: string): string {
-  return createHash('sha256').update(ip).digest('hex').slice(0, 32);
 }

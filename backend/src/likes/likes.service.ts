@@ -35,7 +35,7 @@ export class LikesService {
           select: { likeCount: true },
         }),
       ]);
-      this.events.emit(LIKE_CREATED, {
+      await this.events.emitAsync(LIKE_CREATED, {
         actorId: userId,
         videoId,
         authorId: video.authorId,

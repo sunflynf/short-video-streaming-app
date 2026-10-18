@@ -8,7 +8,7 @@ These are actionable plans for building the MVP. There's one file per phase from
 | 1 | [Core backend foundation](./phase-1-backend-core.md) ✅ | 4–12 | 0 |
 | 2 | [Video upload & media pipeline](./phase-2-media.md) ✅ (real-Mux check pending keys) | 13–20 | 1 |
 | 3 | [Feed & discovery](./phase-3-feed.md) ✅ | 21–28 | 2 |
-| 4 | [Social interactions](./phase-4-social.md) | 29–35 | 3 |
+| 4 | [Social interactions](./phase-4-social.md) ✅ | 29–35 | 3 |
 | 5 | [Mobile app shell & video UI](./phase-5-mobile.md) | 36–45 | 1 (auth), 2–4 (APIs) |
 | 6 | [Testing, hardening & polish](./phase-6-hardening.md) | 46–52 | 1–5 |
 | 7 | [MVP launch prep](./phase-7-launch.md) | 53–60 | 6 |

@@ -40,7 +40,10 @@ export class FollowsService {
       }
       throw err;
     }
-    this.events.emit(FOLLOW_CREATED, { followerId, followingId } satisfies FollowCreatedEvent);
+    await this.events.emitAsync(FOLLOW_CREATED, {
+      followerId,
+      followingId,
+    } satisfies FollowCreatedEvent);
     return { following: true };
   }
 

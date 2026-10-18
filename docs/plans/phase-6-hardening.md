@@ -14,7 +14,7 @@ Make the core flows reliable and observable, and block the obvious abuse vectors
 
 ### Day 46 — Rate limiting & abuse
 - [ ] `@nestjs/throttler` with Redis storage (`@nest-lab/throttler-storage-redis`). Global default 100 req/min per user or IP.
-- [ ] Stricter route limits: `/auth/login` 5/min per IP+email, `/auth/signup` 3/min per IP, `/videos/upload` 10/hour, comments 10/min, follows 30/min
+- [ ] Stricter route limits: `/auth/login` 5/min per IP+email, `/auth/signup` 3/min per IP, `/videos/upload` 10/hour, comments 10/min, follows 30/min (comments and follows were moved here from Phase 4), plus likes, views and shares (60/min)
 - [ ] Set `trust proxy` correctly so the IP is read from `X-Forwarded-For` behind Railway
 - [ ] Return 429 with a `Retry-After` header; the mobile client shows a friendly toast
 

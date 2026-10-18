@@ -23,6 +23,8 @@ const envSchema = z.object({
   FEED_WINDOW_DAYS: z.coerce.number().positive().default(14),
   FEED_SNAPSHOT_TTL_SEC: z.coerce.number().int().positive().default(1800),
   ANON_FEED_CACHE_SEC: z.coerce.number().int().positive().default(60),
+  /** Base URL for share links (`${PUBLIC_WEB_URL}/v/:id`). */
+  PUBLIC_WEB_URL: z.url().default('http://localhost:3000'),
 });
 
 export type Env = z.infer<typeof envSchema>;

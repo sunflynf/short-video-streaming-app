@@ -22,6 +22,7 @@ describe('validateEnv', () => {
       FEED_WINDOW_DAYS: 14,
       FEED_SNAPSHOT_TTL_SEC: 1800,
       ANON_FEED_CACHE_SEC: 60,
+      PUBLIC_WEB_URL: 'http://localhost:3000',
     });
   });
 

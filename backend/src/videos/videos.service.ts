@@ -21,10 +21,7 @@ export class VideosService {
   /** Published videos are public; the author and admins also see unpublished or hidden ones. */
   async get(id: string, viewer?: AuthUser): Promise<VideoDto> {
     const video = await this.find(id);
-    const published = video.status === 'READY' && !video.hidden;
-    if (!published && !this.isOwnerOrAdmin(video, viewer)) {
-      throw new NotFoundException('Video not found');
-    }
+    this.checkVisible(video, viewer);
     const [dto] = await this.toDtos([video], viewer?.id);
     return dto!;
   }
@@ -96,6 +93,42 @@ export class VideosService {
       (r) => r,
     );
     return { items: await this.toDtos(page.items, viewer?.id), nextCursor: page.nextCursor };
+  }
+
+  /** 404 unless the viewer may see the video (same rule as GET /videos/:id). */
+  async assertVisible(
+    id: string,
+    viewer?: AuthUser,
+  ): Promise<{
+    id: string;
+    authorId: string;
+    caption: string | null;
+    muxPlaybackId: string | null;
+  }> {
+    const video = await this.prisma.video.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        authorId: true,
+        status: true,
+        hidden: true,
+        caption: true,
+        muxPlaybackId: true,
+      },
+    });
+    if (!video) throw new NotFoundException('Video not found');
+    this.checkVisible(video, viewer);
+    return video;
+  }
+
+  private checkVisible(
+    video: { authorId: string; status: string; hidden: boolean },
+    viewer?: AuthUser,
+  ): void {
+    const published = video.status === 'READY' && !video.hidden;
+    if (!published && !this.isOwnerOrAdmin(video, viewer)) {
+      throw new NotFoundException('Video not found');
+    }
   }
 
   private async find(id: string): Promise<VideoRow> {
