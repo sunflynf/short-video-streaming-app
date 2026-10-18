@@ -86,6 +86,8 @@ The app should support:
 - Mux or Cloudflare Stream for transcoding and adaptive streaming
 - Cloudflare R2 or AWS S3 for storage
 
+> The MVP locks in specific choices from the options above (JWT auth in NestJS, Mux, R2 for avatars, Zustand + TanStack Query). See [docs/decisions.md](./docs/decisions.md).
+
 ### Real-Time
 - Socket.IO for real-time interactions (likes, comments, presence)
 - Supabase Realtime (optional)
@@ -101,7 +103,7 @@ The app should support:
 
 ## Project Timeline
 
-See [TIMELINE.md](./TIMELINE.md) for detailed development phases.
+See [TIMELINE.md](./TIMELINE.md) for detailed development phases and [docs/plans/](./docs/plans/README.md) for the actionable per-phase work plans.
 
 ## Architecture
 
@@ -110,10 +112,9 @@ See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structur
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
-- PostgreSQL
-- Redis
+- Node.js 20+
+- pnpm 9
+- Docker (runs local PostgreSQL + Redis)
 
 ### Installation
 
@@ -121,48 +122,54 @@ See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structur
 git clone https://github.com/sunflynf/short-video-streaming-app.git
 cd short-video-streaming-app
 
-# Backend setup
-cd backend
-npm install
-cp .env.example .env
-npx prisma migrate dev
-npm run start:dev
+# Local Postgres + Redis
+docker compose up -d
 
-# Mobile setup (in separate terminal)
-cd ../mobile
-npm install
-npm start
+# Install all workspaces (pnpm monorepo)
+pnpm install
+
+# Backend
+cp backend/.env.example backend/.env
+pnpm --filter backend exec prisma migrate dev
+
+# Mobile
+cp apps/mobile/.env.example apps/mobile/.env
+
+# Run API + Expo together
+pnpm dev
 ```
 
 ### Environment Variables
 
-See `.env.example` files in backend and mobile directories.
+See `backend/.env.example` and `apps/mobile/.env.example`. Each phase plan lists the variables it introduces.
 
 ## Features by Phase
 
+Legend: ⬜ planned · 🔄 in progress · ✅ done
+
 ### Phase 1: MVP Foundation
-- ✅ User management and auth
-- ✅ Video upload API
-- ✅ Video streaming (HLS)
-- ✅ Feed with basic ranking
-- ✅ Like/unlike
-- ✅ Follow/unfollow
-- ✅ Basic mobile app UI
+- ⬜ User management and auth
+- ⬜ Video upload API
+- ⬜ Video streaming (HLS)
+- ⬜ Feed with basic ranking
+- ⬜ Like/unlike
+- ⬜ Follow/unfollow
+- ⬜ Basic mobile app UI
 
 ### Phase 2: Social Features
-- ✅ Comments and replies
-- ✅ Share functionality
-- ✅ User notifications
-- ✅ Creator dashboard
-- ✅ Search and trending
-- ✅ Video recommendations
+- ⬜ Comments and replies
+- ⬜ Share functionality
+- ⬜ User notifications
+- ⬜ Creator dashboard
+- ⬜ Search and trending
+- ⬜ Video recommendations
 
 ### Phase 3: Advanced Features
-- 🔄 Live streaming
-- 🔄 Duet/remix features
-- 🔄 Creator monetization
-- 🔄 Advanced recommendation engine (ML)
-- 🔄 Creator tools and analytics
+- ⬜ Live streaming
+- ⬜ Duet/remix features
+- ⬜ Creator monetization
+- ⬜ Advanced recommendation engine (ML)
+- ⬜ Creator tools and analytics
 
 ## Deployment
 
