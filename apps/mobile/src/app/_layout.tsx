@@ -10,6 +10,8 @@ import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Alert, AppState, Platform } from 'react-native';
+import { ActionSheetHost } from '../components/ActionSheet';
+import { identify } from '../lib/analytics';
 import { ApiRequestError } from '../services/api';
 import { useAuth } from '../store/auth';
 
@@ -56,6 +58,7 @@ function RootLayout() {
   useEffect(() => {
     queryClient.clear();
     setSentryUser(userId);
+    identify(userId);
   }, [queryClient, userId]);
 
   if (!hydrated) return null;
@@ -83,11 +86,13 @@ function RootLayout() {
             name="edit-profile"
             options={{ presentation: 'modal', headerShown: true, title: 'Edit profile' }}
           />
+          <Stack.Screen name="settings" options={{ headerShown: true, title: 'Settings' }} />
         </Stack.Protected>
         <Stack.Protected guard={!session}>
           <Stack.Screen name="(auth)" />
         </Stack.Protected>
       </Stack>
+      <ActionSheetHost />
     </QueryClientProvider>
   );
 }

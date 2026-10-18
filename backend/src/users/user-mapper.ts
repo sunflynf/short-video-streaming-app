@@ -36,7 +36,11 @@ export function toUserSummary(row: SummaryRow): UserSummary {
   };
 }
 
-export function toUserProfile(row: ProfileRow, isFollowing: boolean | null): UserProfile {
+export function toUserProfile(
+  row: ProfileRow,
+  isFollowing: boolean | null,
+  blockedByMe: boolean | null = null,
+): UserProfile {
   return {
     ...toUserSummary(row),
     bio: row.bio,
@@ -44,6 +48,7 @@ export function toUserProfile(row: ProfileRow, isFollowing: boolean | null): Use
     followingCount: row.followingCount,
     videoCount: row._count.videos,
     isFollowing,
+    blockedByMe,
     createdAt: row.createdAt.toISOString(),
   };
 }

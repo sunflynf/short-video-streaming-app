@@ -63,6 +63,7 @@ export const authStyles = StyleSheet.create({
   form: { padding: 24, gap: 16 },
   title: { fontSize: 28, fontWeight: '800', color: colors.text, marginBottom: 8 },
   switch: { textAlign: 'center', color: colors.muted },
+  legal: { textAlign: 'center', color: colors.muted, fontSize: 12, lineHeight: 18 },
   link: { color: colors.accent, fontWeight: '600' },
 });
 const styles = authStyles;

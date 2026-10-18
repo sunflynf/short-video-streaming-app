@@ -4,7 +4,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -15,7 +14,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { notify } from '../../components/ActionSheet';
 import { Avatar } from '../../components/Avatar';
+import { confirmDestructive, openReportSheet } from '../../components/menus';
 import { Empty, ErrorView, Loading, errorMessage } from '../../components/States';
 import { timeAgo } from '../../lib/format';
 import { colors } from '../../lib/theme';
@@ -25,6 +26,7 @@ import {
   useDeleteComment,
   useReplies,
 } from '../../services/queries/comments';
+import { reportComment } from '../../services/queries/moderation';
 import { useMe } from '../../store/auth';
 
 export default function Comments() {
@@ -45,7 +47,7 @@ export default function Comments() {
           setBody('');
           setReplyTo(null);
         },
-        onError: (err) => Alert.alert('Could not post comment', errorMessage(err)),
+        onError: (err) => notify('Could not post comment', errorMessage(err)),
       },
     );
   };
@@ -163,23 +165,19 @@ function CommentRow({
 }) {
   const me = useMe();
   const remove = useDeleteComment(videoId);
-  const canDelete = !comment.deleted && me?.id === comment.author.id;
+  const isOwn = me?.id === comment.author.id;
+  const canDelete = !comment.deleted && isOwn;
+  const canReport = !comment.deleted && !isOwn;
 
   const confirmDelete = () =>
-    Alert.alert('Delete comment?', undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () =>
-          remove.mutate(comment, {
-            onError: (err) => Alert.alert('Could not delete', errorMessage(err)),
-          }),
-      },
-    ]);
+    confirmDestructive('Delete comment?', 'Delete', () => remove.mutateAsync(comment));
+  const report = () => openReportSheet('comment', (reason) => reportComment(comment.id, reason));
 
   return (
-    <Pressable style={styles.row} onLongPress={canDelete ? confirmDelete : undefined}>
+    <Pressable
+      style={styles.row}
+      onLongPress={canDelete ? confirmDelete : canReport ? report : undefined}
+    >
       <Pressable onPress={() => router.push(`/user/${comment.author.id}`)}>
         <Avatar user={comment.author} size={34} />
       </Pressable>
@@ -196,6 +194,11 @@ function CommentRow({
             {canDelete && (
               <Pressable onPress={confirmDelete} hitSlop={6} accessibilityLabel="Delete comment">
                 <Text style={styles.action}>Delete</Text>
+              </Pressable>
+            )}
+            {canReport && (
+              <Pressable onPress={report} hitSlop={6} accessibilityLabel="Report comment">
+                <Text style={styles.action}>Report</Text>
               </Pressable>
             )}
           </View>

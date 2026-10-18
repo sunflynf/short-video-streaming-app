@@ -8,6 +8,7 @@ import type {
 } from '@app/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../store/auth';
+import { track } from '../../lib/analytics';
 import { apiFetch } from '../api';
 import { restoreSnapshot, setFollowing, snapshotVideoCaches } from '../cache-updates';
 import { queryKeys } from '../query-keys';
@@ -27,6 +28,7 @@ export function useToggleFollow() {
       return { snapshot };
     },
     onError: (_err, _vars, ctx) => ctx && restoreSnapshot(qc, ctx.snapshot),
+    onSuccess: (_res, { userId, follow }) => follow && track('follow', { userId }),
     onSettled: () => qc.invalidateQueries({ queryKey: queryKeys.feed('following') }),
   });
 }

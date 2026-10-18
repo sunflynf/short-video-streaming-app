@@ -7,6 +7,7 @@ import {
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { CommentDto, Paginated } from '@app/shared';
 import type { AuthUser } from '../common/auth-user.js';
+import { BlocksService } from '../blocks/blocks.service.js';
 import { toPage, type PaginationQueryDto } from '../common/pagination.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { VideosService } from '../videos/videos.service.js';
@@ -20,6 +21,7 @@ export class CommentsService {
     private readonly prisma: PrismaService,
     private readonly videos: VideosService,
     private readonly events: EventEmitter2,
+    private readonly blocks: BlocksService,
   ) {}
 
   /** Replies are one level deep: replying to a reply attaches to its top-level comment. */
@@ -85,6 +87,7 @@ export class CommentsService {
         videoId,
         parentId: null,
         OR: [{ deletedAt: null }, { replyCount: { gt: 0 } }],
+        authorId: { notIn: await this.blocks.hiddenUserIds(viewer?.id) },
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: query.limit + 1,
@@ -107,7 +110,11 @@ export class CommentsService {
     if (!parent) throw new NotFoundException('Comment not found');
     await this.videos.assertVisible(parent.videoId, viewer);
     const rows = await this.prisma.comment.findMany({
-      where: { parentId: commentId, deletedAt: null },
+      where: {
+        parentId: commentId,
+        deletedAt: null,
+        authorId: { notIn: await this.blocks.hiddenUserIds(viewer?.id) },
+      },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       take: query.limit + 1,
       ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),

@@ -6,6 +6,7 @@ import { randomBytes } from 'node:crypto';
 import type { AuthUser } from '../common/auth-user.js';
 import { toPage, type PaginationQueryDto } from '../common/pagination.js';
 import type { Env } from '../config/env.js';
+import { BlocksService } from '../blocks/blocks.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { REDIS } from '../redis/redis.module.js';
 import { videoSelect } from '../videos/video-mapper.js';
@@ -24,6 +25,7 @@ export class FeedService {
     private readonly prisma: PrismaService,
     private readonly videos: VideosService,
     private readonly seen: SeenStore,
+    private readonly blocks: BlocksService,
     private readonly config: ConfigService<Env, true>,
     @Inject(REDIS) private readonly redis: Redis,
   ) {}
@@ -47,8 +49,14 @@ export class FeedService {
 
     const pageIds = snapshot.ids.slice(offset, offset + query.limit);
     const rows = await this.prisma.video.findMany({
-      // Re-check visibility: videos may have been hidden or deleted since the snapshot.
-      where: { id: { in: pageIds }, status: 'READY', hidden: false },
+      // Re-check visibility: videos may have been hidden or deleted, or their authors blocked,
+      // since the snapshot was taken.
+      where: {
+        id: { in: pageIds },
+        status: 'READY',
+        hidden: false,
+        authorId: { notIn: await this.blocks.hiddenUserIds(viewer?.id) },
+      },
       select: videoSelect,
     });
     const position = new Map(pageIds.map((id, i) => [id, i]));
@@ -70,6 +78,7 @@ export class FeedService {
         status: 'READY',
         hidden: false,
         author: { followers: { some: { followerId: viewer.id } } },
+        authorId: { notIn: await this.blocks.hiddenUserIds(viewer.id) },
       },
       orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
       take: query.limit + 1,
@@ -102,12 +111,13 @@ export class FeedService {
   private async createSnapshot(viewerId: string | undefined): Promise<Snapshot> {
     const size = this.config.get('FEED_SNAPSHOT_SIZE', { infer: true });
     const excluded = viewerId ? await this.seen.list(viewerId) : [];
+    const hiddenAuthors = await this.blocks.hiddenUserIds(viewerId);
     const now = new Date();
     const windowStart = new Date(
       now.getTime() - this.config.get('FEED_WINDOW_DAYS', { infer: true }) * DAY_MS,
     );
 
-    const ids = await this.rankedIds(viewerId, excluded, now, windowStart, size);
+    const ids = await this.rankedIds(viewerId, excluded, hiddenAuthors, now, windowStart, size);
     if (ids.length < size) {
       // Not enough recent videos: fill with older ones, newest first.
       const older = await this.prisma.video.findMany({
@@ -116,7 +126,7 @@ export class FeedService {
           hidden: false,
           publishedAt: { lt: windowStart },
           id: { notIn: excluded },
-          ...(viewerId && { authorId: { not: viewerId } }),
+          authorId: { notIn: viewerId ? [viewerId, ...hiddenAuthors] : [] },
         },
         orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
         take: size - ids.length,
@@ -142,6 +152,7 @@ export class FeedService {
   private async rankedIds(
     viewerId: string | undefined,
     excluded: string[],
+    hiddenAuthors: string[],
     now: Date,
     windowStart: Date,
     limit: number,
@@ -153,6 +164,7 @@ export class FeedService {
         AND "publishedAt" >= ${windowStart}::timestamp
         AND (${viewerId ?? null}::text IS NULL OR "authorId" <> ${viewerId ?? null}::text)
         AND NOT (id = ANY(${excluded}::text[]))
+        AND NOT ("authorId" = ANY(${hiddenAuthors}::text[]))
       ORDER BY
         ("likeCount" * 2 + "commentCount" * 3 + "shareCount" * 4 + 1)::float8
           / power(

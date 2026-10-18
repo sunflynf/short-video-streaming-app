@@ -2,6 +2,7 @@ import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { onJobFailed } from '../observability/job-failures.js';
+import { BlocksService } from '../blocks/blocks.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NOTIFICATIONS_QUEUE } from './notifications.constants.js';
 import { planNotifications, type NotificationTrigger } from './plan-notifications.js';
@@ -15,13 +16,17 @@ export class NotificationsProcessor extends WorkerHost {
     onJobFailed(this.logger, NOTIFICATIONS_QUEUE, job, error);
   }
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly blocks: BlocksService,
+  ) {
     super();
   }
 
   async process(job: Job<NotificationTrigger>): Promise<void> {
     for (const plan of planNotifications(job.data)) {
       const { dedupe, ...data } = plan;
+      if (await this.blocks.isBlockedEitherWay(data.recipientId, data.actorId)) continue;
       if (dedupe) {
         // e.g. like -> unlike -> like, or follow spam: keep one unread notification.
         const existing = await this.prisma.notification.findFirst({

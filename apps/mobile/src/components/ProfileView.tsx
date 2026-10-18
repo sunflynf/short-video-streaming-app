@@ -6,15 +6,19 @@ import { useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { formatCount } from '../lib/format';
 import { colors } from '../lib/theme';
+import { useMyStats, useSetBlocked } from '../services/queries/moderation';
 import { useProfile, useToggleFollow } from '../services/queries/users';
 import { useUserVideos } from '../services/queries/videos';
 import { useMe } from '../store/auth';
+import { showSheet } from './ActionSheet';
 import { Avatar } from './Avatar';
+import { confirmBlock } from './menus';
 import { PrimaryButton } from './Form';
 import { Empty, ErrorView, Loading, errorMessage } from './States';
 
 /** Profile header + 3-column grid of published videos. Used for your own and others' profiles. */
 export function ProfileView({ userId, actions }: { userId: string; actions?: React.ReactNode }) {
+  const isOwn = useMe()?.id === userId;
   const profile = useProfile(userId);
   const videos = useUserVideos(userId);
   const items = useMemo(() => videos.data?.pages.flatMap((p) => p.items) ?? [], [videos.data]);
@@ -33,8 +37,16 @@ export function ProfileView({ userId, actions }: { userId: string; actions?: Rea
       numColumns={3}
       keyExtractor={(v) => v.id}
       ListHeaderComponent={<Header profile={profile.data} actions={actions} />}
-      renderItem={({ item, index }) => <GridCell video={item} userId={userId} index={index} />}
-      ListEmptyComponent={videos.isPending ? <Loading /> : <Empty text="No videos yet." />}
+      renderItem={({ item, index }) => (
+        <GridCell video={item} userId={userId} index={index} showViews={isOwn} />
+      )}
+      ListEmptyComponent={
+        videos.isPending ? (
+          <Loading />
+        ) : (
+          <Empty text={profile.data.blockedByMe ? 'You blocked this account.' : 'No videos yet.'} />
+        )
+      }
       onEndReached={() =>
         videos.hasNextPage && !videos.isFetchingNextPage && videos.fetchNextPage()
       }
@@ -54,7 +66,27 @@ export function ProfileView({ userId, actions }: { userId: string; actions?: Rea
 function Header({ profile, actions }: { profile: UserProfile; actions?: React.ReactNode }) {
   const me = useMe();
   const follow = useToggleFollow();
+  const setBlocked = useSetBlocked();
   const isOwn = me?.id === profile.id;
+
+  const openMenu = () =>
+    showSheet({
+      options: [
+        profile.blockedByMe
+          ? {
+              label: `Unblock @${profile.username}`,
+              onPress: () => setBlocked.mutate({ userId: profile.id, block: false }),
+            }
+          : {
+              label: `Block @${profile.username}`,
+              destructive: true,
+              onPress: () =>
+                confirmBlock(profile, () =>
+                  setBlocked.mutateAsync({ userId: profile.id, block: true }),
+                ),
+            },
+      ],
+    });
   return (
     <View style={styles.header}>
       <Avatar user={profile} size={88} />
@@ -66,15 +98,39 @@ function Header({ profile, actions }: { profile: UserProfile; actions?: React.Re
         <Stat value={profile.videoCount} label="Videos" />
       </View>
       {!!profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
+      {isOwn && <CreatorStatsStrip />}
       <View style={styles.actions}>
         {isOwn ? (
           actions
         ) : (
-          <PrimaryButton
-            title={profile.isFollowing ? 'Following' : 'Follow'}
-            variant={profile.isFollowing ? 'secondary' : 'primary'}
-            onPress={() => follow.mutate({ userId: profile.id, follow: !profile.isFollowing })}
-          />
+          <>
+            <View style={styles.flex}>
+              {profile.blockedByMe ? (
+                <PrimaryButton
+                  title="Unblock"
+                  variant="secondary"
+                  loading={setBlocked.isPending}
+                  onPress={() => setBlocked.mutate({ userId: profile.id, block: false })}
+                />
+              ) : (
+                <PrimaryButton
+                  title={profile.isFollowing ? 'Following' : 'Follow'}
+                  variant={profile.isFollowing ? 'secondary' : 'primary'}
+                  onPress={() =>
+                    follow.mutate({ userId: profile.id, follow: !profile.isFollowing })
+                  }
+                />
+              )}
+            </View>
+            <Pressable
+              style={styles.more}
+              onPress={openMenu}
+              accessibilityRole="button"
+              accessibilityLabel="More options"
+            >
+              <Ionicons name="ellipsis-horizontal" size={20} color={colors.text} />
+            </Pressable>
+          </>
         )}
       </View>
     </View>
@@ -88,7 +144,33 @@ const Stat = ({ value, label }: { value: number; label: string }) => (
   </View>
 );
 
-function GridCell({ video, userId, index }: { video: VideoDto; userId: string; index: number }) {
+/** Your own reach: lifetime totals plus new followers this week. */
+function CreatorStatsStrip() {
+  const stats = useMyStats();
+  if (!stats.data) return null;
+  const { totals, followerGains } = stats.data;
+  const newFollowers = followerGains.reduce((sum, d) => sum + d.count, 0);
+  return (
+    <View style={styles.creatorStats} accessibilityLabel="Your stats">
+      <Stat value={totals.views} label="Views" />
+      <Stat value={totals.likes} label="Likes" />
+      <Stat value={totals.comments} label="Comments" />
+      <Stat value={newFollowers} label="New this week" />
+    </View>
+  );
+}
+
+function GridCell({
+  video,
+  userId,
+  index,
+  showViews,
+}: {
+  video: VideoDto;
+  userId: string;
+  index: number;
+  showViews: boolean;
+}) {
   return (
     <Pressable
       style={styles.cell}
@@ -101,8 +183,10 @@ function GridCell({ video, userId, index }: { video: VideoDto; userId: string; i
         <View style={[StyleSheet.absoluteFill, styles.placeholder]} />
       )}
       <View style={styles.cellMeta}>
-        <Ionicons name="heart" size={12} color="#fff" />
-        <Text style={styles.cellText}>{formatCount(video.likeCount)}</Text>
+        <Ionicons name={showViews ? 'play' : 'heart'} size={12} color="#fff" />
+        <Text style={styles.cellText}>
+          {formatCount(showViews ? video.viewCount : video.likeCount)}
+        </Text>
       </View>
     </Pressable>
   );
@@ -118,6 +202,23 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 18, fontWeight: '700', color: colors.text },
   statLabel: { fontSize: 12, color: colors.muted },
   bio: { textAlign: 'center', color: colors.text, marginTop: 8 },
+  creatorStats: {
+    flexDirection: 'row',
+    gap: 20,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+  },
+  flex: { flex: 1 },
+  more: {
+    width: 50,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   actions: {
     flexDirection: 'row',
     gap: 10,

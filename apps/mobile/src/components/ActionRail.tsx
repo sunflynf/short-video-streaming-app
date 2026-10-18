@@ -1,20 +1,54 @@
 import type { VideoDto } from '@app/shared';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatCount } from '../lib/format';
 import { colors } from '../lib/theme';
+import { reportVideo, useDeleteVideo, useSetBlocked } from '../services/queries/moderation';
 import { useToggleFollow } from '../services/queries/users';
 import { shareVideo, useToggleLike } from '../services/queries/videos';
 import { useMe } from '../store/auth';
+import { notify, showSheet } from './ActionSheet';
 import { Avatar } from './Avatar';
+import { confirmBlock, confirmDestructive, openReportSheet } from './menus';
 import { errorMessage } from './States';
 
 export function ActionRail({ video }: { video: VideoDto }) {
   const me = useMe();
   const like = useToggleLike();
   const follow = useToggleFollow();
+  const remove = useDeleteVideo();
+  const setBlocked = useSetBlocked();
   const isOwn = me?.id === video.author.id;
+
+  const openMenu = () =>
+    showSheet({
+      options: isOwn
+        ? [
+            {
+              label: 'Delete video',
+              destructive: true,
+              onPress: () =>
+                confirmDestructive('Delete this video? This can’t be undone.', 'Delete', () =>
+                  remove.mutateAsync(video),
+                ),
+            },
+          ]
+        : [
+            {
+              label: 'Report video',
+              onPress: () => openReportSheet('video', (reason) => reportVideo(video.id, reason)),
+            },
+            {
+              label: `Block @${video.author.username}`,
+              destructive: true,
+              onPress: () =>
+                confirmBlock(video.author, () =>
+                  setBlocked.mutateAsync({ userId: video.author.id, block: true }),
+                ),
+            },
+          ],
+    });
 
   return (
     <View style={styles.rail}>
@@ -55,16 +89,17 @@ export function ActionRail({ video }: { video: VideoDto }) {
         label={formatCount(video.shareCount)}
         accessibilityLabel="Share"
         onPress={() =>
-          shareVideo(video).catch((err) => Alert.alert('Could not share', errorMessage(err)))
+          shareVideo(video).catch((err) => notify('Could not share', errorMessage(err)))
         }
       />
+      <RailButton icon="ellipsis-horizontal" accessibilityLabel="More options" onPress={openMenu} />
     </View>
   );
 }
 
 function RailButton(props: {
   icon: keyof typeof Ionicons.glyphMap;
-  label: string;
+  label?: string;
   color?: string;
   accessibilityLabel: string;
   onPress(): void;
@@ -78,7 +113,7 @@ function RailButton(props: {
       hitSlop={6}
     >
       <Ionicons name={props.icon} size={34} color={props.color ?? '#fff'} />
-      <Text style={styles.label}>{props.label}</Text>
+      {props.label !== undefined && <Text style={styles.label}>{props.label}</Text>}
     </Pressable>
   );
 }

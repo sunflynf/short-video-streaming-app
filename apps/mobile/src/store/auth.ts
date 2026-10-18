@@ -63,10 +63,13 @@ configureSession({
   getAccessToken: () => useAuth.getState().session?.accessToken,
   getRefreshToken: () => useAuth.getState().session?.refreshToken,
   onRefreshed: (auth) => void useAuth.getState().signIn(auth),
-  onSessionExpired: () => {
-    useAuth.setState({ session: null });
-    void tokenStorage.clear();
-  },
+  onSessionExpired: () => clearLocalSession(),
 });
+
+/** Forget the session on this device without calling the API (expired or deleted account). */
+export function clearLocalSession(): void {
+  useAuth.setState({ session: null });
+  void tokenStorage.clear();
+}
 
 export const useMe = () => useAuth((s) => s.session?.user);

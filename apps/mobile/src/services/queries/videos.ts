@@ -1,6 +1,7 @@
 import type { FeedTab, LikeResponse, Paginated, ShareResponse, VideoDto } from '@app/shared';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Share } from 'react-native';
+import { track } from '../../lib/analytics';
 import { apiFetch } from '../api';
 import { restoreSnapshot, setVideoLiked, snapshotVideoCaches } from '../cache-updates';
 import { queryKeys } from '../query-keys';
@@ -50,7 +51,10 @@ export function useToggleLike() {
       return { snapshot };
     },
     onError: (_err, _vars, ctx) => ctx && restoreSnapshot(qc, ctx.snapshot),
-    onSuccess: (res, { videoId }) => setVideoLiked(qc, videoId, res.liked, res.likeCount),
+    onSuccess: (res, { videoId, like }) => {
+      setVideoLiked(qc, videoId, res.liked, res.likeCount);
+      if (like) track('like', { videoId });
+    },
   });
 }
 
@@ -59,6 +63,7 @@ export async function shareVideo(video: VideoDto): Promise<void> {
     method: 'POST',
     body: { channel: 'system' },
   });
+  track('share', { videoId: video.id });
   await Share.share({
     message: video.caption ? `${video.caption} ${shareUrl}` : shareUrl,
     url: shareUrl,
@@ -67,5 +72,6 @@ export async function shareVideo(video: VideoDto): Promise<void> {
 
 /** Fire-and-forget: a lost view isn't worth surfacing to the user. */
 export function recordView(videoId: string, watchedMs: number): void {
+  track('video_view', { videoId, watchedMs });
   apiFetch(`/videos/${videoId}/view`, { method: 'POST', body: { watchedMs } }).catch(() => {});
 }

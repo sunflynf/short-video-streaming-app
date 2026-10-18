@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { FollowResponse, Paginated, UserSummary } from '@app/shared';
 import { Prisma } from '../generated/prisma/client.js';
+import { BlocksService } from '../blocks/blocks.service.js';
 import { toPage, type PaginationQueryDto } from '../common/pagination.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { toUserSummary, userSummarySelect } from '../users/user-mapper.js';
@@ -14,6 +15,7 @@ export class FollowsService {
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
     private readonly events: EventEmitter2,
+    private readonly blocks: BlocksService,
   ) {}
 
   /** Idempotent: following someone you already follow is a no-op. */
@@ -22,6 +24,9 @@ export class FollowsService {
       throw new BadRequestException('You cannot follow yourself');
     }
     await this.users.assertExists(followingId);
+    if (await this.blocks.isBlockedEitherWay(followerId, followingId)) {
+      throw new ForbiddenException('You can’t follow this account');
+    }
     try {
       await this.prisma.$transaction([
         this.prisma.follow.create({ data: { followerId, followingId } }),

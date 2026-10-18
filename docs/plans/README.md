@@ -11,7 +11,7 @@ These are actionable plans for building the MVP. There's one file per phase from
 | 4 | [Social interactions](./phase-4-social.md) ✅ | 29–35 | 3 |
 | 5 | [Mobile app shell & video UI](./phase-5-mobile.md) ✅ (device QA pending) | 36–45 | 1 (auth), 2–4 (APIs) |
 | 6 | [Testing, hardening & polish](./phase-6-hardening.md) ✅ (device QA pending) | 46–52 | 1–5 |
-| 7 | [MVP launch prep](./phase-7-launch.md) | 53–60 | 6 |
+| 7 | [MVP launch prep](./phase-7-launch.md) ✅ (account steps in [`launch.md`](../launch.md)) | 53–60 | 6 |
 
 ```text
 0 ─► 1 ─► 2 ─► 3 ─► 4 ─┐

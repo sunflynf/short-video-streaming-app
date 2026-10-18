@@ -1,10 +1,17 @@
-import { BadRequestException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { AuthResponse, MeProfile } from '@app/shared';
 import * as argon2 from 'argon2';
 import type { Env } from '../config/env.js';
 import type { Role } from '../generated/prisma/client.js';
+import { BansService } from '../moderation/bans.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { meProfileSelect, toMeProfile } from '../users/user-mapper.js';
 import type { LoginDto, ResetPasswordDto, SignupDto } from './dto/auth.dto.js';
@@ -24,6 +31,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService<Env, true>,
+    private readonly bans: BansService,
   ) {}
 
   async signup(dto: SignupDto): Promise<AuthResponse> {
@@ -47,6 +55,7 @@ export class AuthService {
     if (!user || !valid) {
       throw new UnauthorizedException('Invalid email or password');
     }
+    await this.assertNotBanned(user.id);
     return this.issueTokens(toMeProfile(user));
   }
 
@@ -84,6 +93,7 @@ export class AuthService {
       select: meProfileSelect,
     });
     if (!user) throw new UnauthorizedException('Invalid refresh token');
+    await this.assertNotBanned(user.id);
     return this.issueTokens(toMeProfile(user));
   }
 
@@ -166,6 +176,12 @@ export class AuthService {
       },
     });
     return { accessToken, refreshToken, user };
+  }
+
+  private async assertNotBanned(userId: string): Promise<void> {
+    if (await this.bans.isBanned(userId)) {
+      throw new ForbiddenException('Your account has been suspended');
+    }
   }
 
   private async revokeAll(userId: string): Promise<void> {

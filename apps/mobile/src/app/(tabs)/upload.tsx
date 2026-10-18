@@ -4,17 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { notify } from '../../components/ActionSheet';
 import { Field, FormError, PrimaryButton } from '../../components/Form';
 import { errorMessage } from '../../components/States';
+import { track } from '../../lib/analytics';
 import { colors } from '../../lib/theme';
 import { validateClip } from '../../lib/validate-clip';
 import { ApiRequestError, apiFetch } from '../../services/api';
@@ -51,6 +45,7 @@ export default function Upload() {
         const video = await apiFetch<VideoDto>(`/videos/${stage.videoId}`);
         if (video.status === 'READY') {
           clearInterval(timer);
+          track('upload_ready', { videoId: video.id });
           setStage({ kind: 'idle' });
           setClip(null);
           setCaption('');
@@ -86,7 +81,7 @@ export default function Upload() {
     if (!asset) return;
     const problem = validateClip({ durationMs: asset.duration, fileSize: asset.fileSize });
     if (problem) {
-      Alert.alert('Can’t use this clip', problem);
+      notify('Can’t use this clip', problem);
       return;
     }
     setClip({
@@ -111,6 +106,7 @@ export default function Upload() {
         setStage({ kind: 'uploading', progress }),
       );
       await upload.current.done;
+      track('upload_started', { videoId, durationMs: clip.durationMs });
       setStage({ kind: 'processing', videoId });
     } catch (err) {
       setStage({ kind: 'failed', message: uploadErrorMessage(err) });

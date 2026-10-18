@@ -57,3 +57,11 @@ jobs:
       - name: Backend e2e + coverage
         working-directory: backend
         run: pnpm test:cov
+
+  # Builds the production image exactly as Railway will, so Dockerfile breakage shows up on PRs.
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -f backend/Dockerfile -t shortvid-api:ci .

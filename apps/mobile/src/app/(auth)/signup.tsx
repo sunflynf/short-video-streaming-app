@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { Field, FormError, PrimaryButton } from '../../components/Form';
 import { errorMessage } from '../../components/States';
+import { openLegal } from '../../lib/links';
 import { validateCredentials } from '../../lib/validation';
 import { useSignup } from '../../services/queries/auth';
 import { authStyles as styles } from './login';
@@ -57,6 +58,17 @@ export default function Signup() {
         />
         <FormError message={signup.isError ? errorMessage(signup.error) : null} />
         <PrimaryButton title="Sign up" onPress={submit} loading={signup.isPending} />
+        <Text style={styles.legal}>
+          By signing up you agree to our{' '}
+          <Text style={styles.link} onPress={() => openLegal('terms')} accessibilityRole="link">
+            Terms of Service
+          </Text>{' '}
+          and{' '}
+          <Text style={styles.link} onPress={() => openLegal('privacy')} accessibilityRole="link">
+            Privacy Policy
+          </Text>
+          .
+        </Text>
         <Text style={styles.switch}>
           Already have an account?{' '}
           <Link href="/login" replace style={styles.link}>

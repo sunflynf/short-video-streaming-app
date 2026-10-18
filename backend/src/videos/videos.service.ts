@@ -1,6 +1,7 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { Paginated, VideoDto } from '@app/shared';
 import type { AuthUser } from '../common/auth-user.js';
+import { BlocksService } from '../blocks/blocks.service.js';
 import { toPage, type PaginationQueryDto } from '../common/pagination.js';
 import { MEDIA_PROVIDER, type MediaProvider } from '../media/media-provider.js';
 import { MediaQueue } from '../media/media.queue.js';
@@ -15,13 +16,14 @@ export class VideosService {
     private readonly prisma: PrismaService,
     private readonly users: UsersService,
     private readonly queue: MediaQueue,
+    private readonly blocks: BlocksService,
     @Inject(MEDIA_PROVIDER) private readonly media: MediaProvider,
   ) {}
 
   /** Published videos are public; the author and admins also see unpublished or hidden ones. */
   async get(id: string, viewer?: AuthUser): Promise<VideoDto> {
     const video = await this.find(id);
-    this.checkVisible(video, viewer);
+    await this.checkVisible(video, viewer);
     const [dto] = await this.toDtos([video], viewer?.id);
     return dto!;
   }
@@ -92,6 +94,13 @@ export class VideosService {
     viewer?: AuthUser,
   ): Promise<Paginated<VideoDto>> {
     await this.users.assertExists(authorId);
+    if (
+      viewer &&
+      viewer.id !== authorId &&
+      (await this.blocks.isBlockedEitherWay(viewer.id, authorId))
+    ) {
+      return { items: [], nextCursor: null };
+    }
     const rows = await this.prisma.video.findMany({
       where: { authorId, status: 'READY', hidden: false },
       orderBy: [{ publishedAt: 'desc' }, { id: 'desc' }],
@@ -130,16 +139,24 @@ export class VideosService {
       },
     });
     if (!video) throw new NotFoundException('Video not found');
-    this.checkVisible(video, viewer);
+    await this.checkVisible(video, viewer);
     return video;
   }
 
-  private checkVisible(
+  /** Unpublished videos are the author's (and admins') only; blocks hide videos both ways. */
+  private async checkVisible(
     video: { authorId: string; status: string; hidden: boolean },
     viewer?: AuthUser,
-  ): void {
+  ): Promise<void> {
     const published = video.status === 'READY' && !video.hidden;
     if (!published && !this.isOwnerOrAdmin(video, viewer)) {
+      throw new NotFoundException('Video not found');
+    }
+    if (
+      viewer &&
+      viewer.id !== video.authorId &&
+      (await this.blocks.isBlockedEitherWay(viewer.id, video.authorId))
+    ) {
       throw new NotFoundException('Video not found');
     }
   }

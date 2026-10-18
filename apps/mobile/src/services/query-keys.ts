@@ -10,6 +10,7 @@ export const queryKeys = {
   replies: (commentId: string) => ['replies', commentId] as const,
   notifications: ['notifications'] as const,
   unreadCount: ['unreadCount'] as const,
+  myStats: ['myStats'] as const,
 };
 
 /** Query roots that hold lists of VideoDto pages. */

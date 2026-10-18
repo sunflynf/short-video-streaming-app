@@ -23,7 +23,22 @@ export class UsersService {
   async getProfile(where: Prisma.UserWhereUniqueInput, viewer?: AuthUser): Promise<UserProfile> {
     const user = await this.prisma.user.findUnique({ where, select: userProfileSelect });
     if (!user) throw new NotFoundException('User not found');
-    return toUserProfile(user, await this.isFollowing(viewer, user.id));
+    const [isFollowing, blockedByMe] = await Promise.all([
+      this.isFollowing(viewer, user.id),
+      this.blockedByViewer(viewer, user.id),
+    ]);
+    return toUserProfile(user, isFollowing, blockedByMe);
+  }
+
+  private async blockedByViewer(
+    viewer: AuthUser | undefined,
+    userId: string,
+  ): Promise<boolean | null> {
+    if (!viewer || viewer.id === userId) return null;
+    const count = await this.prisma.block.count({
+      where: { blockerId: viewer.id, blockedId: userId },
+    });
+    return count > 0;
   }
 
   async getMe(userId: string): Promise<MeProfile> {

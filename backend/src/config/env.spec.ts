@@ -43,4 +43,37 @@ describe('validateEnv', () => {
       /JWT_ACCESS_SECRET/,
     );
   });
+
+  describe('in production', () => {
+    const prod = {
+      ...valid,
+      NODE_ENV: 'production',
+      JWT_ACCESS_SECRET: 'q'.repeat(64),
+      CORS_ORIGINS: 'https://shortvid.app',
+      PUBLIC_WEB_URL: 'https://shortvid.app',
+      LEGAL_CONTACT_EMAIL: 'support@shortvid.app',
+    };
+
+    it('accepts a complete production config', () => {
+      expect(validateEnv(prod).NODE_ENV).toBe('production');
+    });
+
+    it.each([
+      [
+        'a dev JWT secret',
+        { JWT_ACCESS_SECRET: 'dev-only-secret-change-me-0123456789abcdef0123456789' },
+        /JWT_ACCESS_SECRET/,
+      ],
+      ['a short JWT secret', { JWT_ACCESS_SECRET: 'x'.repeat(40) }, /JWT_ACCESS_SECRET/],
+      ['no CORS allowlist', { CORS_ORIGINS: undefined }, /CORS_ORIGINS/],
+      ['localhost share links', { PUBLIC_WEB_URL: 'http://localhost:3000' }, /PUBLIC_WEB_URL/],
+      [
+        'the placeholder contact email',
+        { LEGAL_CONTACT_EMAIL: 'support@example.com' },
+        /LEGAL_CONTACT_EMAIL/,
+      ],
+    ])('refuses to boot with %s', (_name, override, error) => {
+      expect(() => validateEnv({ ...prod, ...override })).toThrow(error);
+    });
+  });
 });

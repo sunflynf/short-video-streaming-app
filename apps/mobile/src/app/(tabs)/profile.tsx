@@ -5,7 +5,7 @@ import { ProfileView } from '../../components/ProfileView';
 import { useAuth } from '../../store/auth';
 
 export default function MyProfile() {
-  const { session, signOut } = useAuth();
+  const session = useAuth((s) => s.session);
   if (!session) return null;
   return (
     <ProfileView
@@ -20,7 +20,11 @@ export default function MyProfile() {
             />
           </View>
           <View style={styles.flex}>
-            <PrimaryButton title="Log out" variant="secondary" onPress={() => void signOut()} />
+            <PrimaryButton
+              title="Settings"
+              variant="secondary"
+              onPress={() => router.push('/settings')}
+            />
           </View>
         </View>
       }

@@ -4,15 +4,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SentryModule } from '@sentry/nestjs/setup';
 import { LoggerModule } from 'nestjs-pino';
+import { AccountModule } from './account/account.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { BlocksModule } from './blocks/blocks.module.js';
 import { AvatarsModule } from './avatars/avatars.module.js';
 import { CommentsModule } from './comments/comments.module.js';
 import { validateEnv, type Env } from './config/env.js';
 import { FeedModule } from './feed/feed.module.js';
 import { FollowsModule } from './follows/follows.module.js';
 import { HealthModule } from './health/health.module.js';
+import { LegalModule } from './legal/legal.module.js';
 import { LikesModule } from './likes/likes.module.js';
+import { ModerationModule } from './moderation/moderation.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { loggerParams } from './observability/logging.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -39,6 +43,7 @@ import { VideosModule } from './videos/videos.module.js';
     HealthModule,
     AvatarsModule,
     AuthModule,
+    BlocksModule,
     UsersModule,
     FollowsModule,
     UploadsModule,
@@ -50,6 +55,9 @@ import { VideosModule } from './videos/videos.module.js';
     SharesModule,
     NotificationsModule,
     AdminModule,
+    ModerationModule,
+    AccountModule,
+    LegalModule,
   ],
 })
 export class AppModule {}

@@ -45,15 +45,38 @@ const envSchema = z.object({
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   /** Comma-separated browser origins allowed by CORS. Empty: any origin outside production, none in it. */
   CORS_ORIGINS: optionalString,
+  LEGAL_CONTACT_EMAIL: z.email().default('support@example.com'),
   /** Base URL for share links (`${PUBLIC_WEB_URL}/v/:id`). */
   PUBLIC_WEB_URL: z.url().default('http://localhost:3000'),
+});
+
+const DEV_JWT_SECRET_MARKER = 'dev-only';
+
+/**
+ * Production must not boot with development defaults: a dev or short JWT secret, no CORS
+ * allowlist for the web build, or share links pointing at localhost.
+ */
+const productionSchema = envSchema.superRefine((env, ctx) => {
+  if (env.NODE_ENV !== 'production') return;
+  const issue = (path: string, message: string) =>
+    ctx.addIssue({ code: 'custom', path: [path], message });
+  if (env.JWT_ACCESS_SECRET.includes(DEV_JWT_SECRET_MARKER) || env.JWT_ACCESS_SECRET.length < 48) {
+    issue('JWT_ACCESS_SECRET', 'Use a random secret of at least 48 characters in production');
+  }
+  if (!env.CORS_ORIGINS) issue('CORS_ORIGINS', 'Required in production');
+  if (/localhost|127\.0\.0\.1/.test(env.PUBLIC_WEB_URL)) {
+    issue('PUBLIC_WEB_URL', 'Must be the public URL in production');
+  }
+  if (env.LEGAL_CONTACT_EMAIL.endsWith('@example.com')) {
+    issue('LEGAL_CONTACT_EMAIL', 'Set a real contact address in production');
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;
 
 /** Used by ConfigModule: fail fast at boot when required env vars are missing or invalid. */
 export function validateEnv(config: Record<string, unknown>): Env {
-  const result = envSchema.safeParse(config);
+  const result = productionSchema.safeParse(config);
   if (!result.success) {
     throw new Error(`Invalid environment variables:\n${z.prettifyError(result.error)}`);
   }

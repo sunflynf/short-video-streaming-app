@@ -8,6 +8,7 @@ import type { Env } from '../config/env.js';
 import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { BannedGuard } from '../moderation/banned.guard.js';
 import { AppThrottlerGuard } from '../throttling/app-throttler.guard.js';
 import { ThrottlingModule } from '../throttling/throttling.module.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
@@ -36,6 +37,7 @@ import { JwtStrategy } from './strategies/jwt.strategy.js';
     // Order matters: authenticate first, then check roles, then rate-limit (keyed by user).
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: BannedGuard },
     { provide: APP_GUARD, useClass: AppThrottlerGuard },
   ],
 })

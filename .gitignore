@@ -19,3 +19,4 @@ android/
 
 # Prisma generated client
 backend/src/generated/
+apps/mobile/play-service-account.json

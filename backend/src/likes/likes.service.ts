@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { LikeResponse, Paginated, VideoDto } from '@app/shared';
 import type { AuthUser } from '../common/auth-user.js';
+import { BlocksService } from '../blocks/blocks.service.js';
 import { toPage, type PaginationQueryDto } from '../common/pagination.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -17,6 +18,7 @@ export class LikesService {
     private readonly users: UsersService,
     private readonly videos: VideosService,
     private readonly events: EventEmitter2,
+    private readonly blocks: BlocksService,
   ) {}
 
   /** Idempotent. Only published videos can be liked. */
@@ -26,6 +28,12 @@ export class LikesService {
       select: { authorId: true },
     });
     if (!video) throw new NotFoundException('Video not found');
+    if (
+      video.authorId !== userId &&
+      (await this.blocks.isBlockedEitherWay(userId, video.authorId))
+    ) {
+      throw new NotFoundException('Video not found');
+    }
     try {
       const [, updated] = await this.prisma.$transaction([
         this.prisma.like.create({ data: { userId, videoId } }),

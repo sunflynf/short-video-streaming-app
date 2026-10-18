@@ -1,4 +1,4 @@
-const WEB_URL = process.env.EXPO_PUBLIC_WEB_URL ?? 'http://localhost:3000';
+import { WEB_URL } from '../lib/links';
 
 /**
  * Shared links point at `${WEB_URL}/v/:id` (the server's landing page). When the OS opens the

@@ -3,6 +3,7 @@ export * from './api/comments';
 export * from './api/common';
 export * from './api/feed';
 export * from './api/health';
+export * from './api/moderation';
 export * from './api/notifications';
 export * from './api/users';
 export * from './api/videos';

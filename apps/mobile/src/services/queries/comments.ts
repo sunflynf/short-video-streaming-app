@@ -1,5 +1,6 @@
 import type { CommentDto, Paginated } from '@app/shared';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { track } from '../../lib/analytics';
 import { apiFetch } from '../api';
 import { adjustCommentCount } from '../cache-updates';
 import { queryKeys } from '../query-keys';
@@ -35,6 +36,7 @@ export function useCreateComment(videoId: string) {
     mutationFn: (body: { body: string; parentId?: string }) =>
       apiFetch<CommentDto>(`/videos/${videoId}/comments`, { method: 'POST', body }),
     onSuccess: (comment) => {
+      track('comment', { videoId, reply: !!comment.parentId });
       adjustCommentCount(qc, videoId, 1);
       void qc.invalidateQueries({
         queryKey: comment.parentId

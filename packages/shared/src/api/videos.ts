@@ -15,6 +15,7 @@ export type VideoDto = {
   likeCount: number;
   commentCount: number;
   shareCount: number;
+  viewCount: number;
   likedByMe: boolean;
   /** Whether the viewer follows the author (false when anonymous or for your own videos). */
   followingAuthor: boolean;

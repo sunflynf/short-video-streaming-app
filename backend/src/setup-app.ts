@@ -11,8 +11,14 @@ export function setupApp(nestApp: INestApplication): void {
   const app = nestApp as NestExpressApplication;
   const config = app.get(ConfigService<Env, true>);
 
-  // Share landing pages live at /v/:id so links stay short and API-version independent.
-  app.setGlobalPrefix('v1', { exclude: [{ path: 'v/:id', method: RequestMethod.GET }] });
+  // Share landing pages (/v/:id) and legal pages live outside /v1: their URLs must never change.
+  app.setGlobalPrefix('v1', {
+    exclude: [
+      { path: 'v/:id', method: RequestMethod.GET },
+      { path: 'legal/terms', method: RequestMethod.GET },
+      { path: 'legal/privacy', method: RequestMethod.GET },
+    ],
+  });
   // Behind a proxy (Railway), trust X-Forwarded-For for exactly that many hops, so rate limits
   // and view/share debouncing see the client's IP rather than the proxy's.
   app.set('trust proxy', config.get('TRUST_PROXY', { infer: true }));

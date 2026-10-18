@@ -19,6 +19,7 @@ const video = (id: string, authorId: string, overrides: Partial<VideoDto> = {}):
   likeCount: 5,
   commentCount: 1,
   shareCount: 0,
+  viewCount: 0,
   likedByMe: false,
   followingAuthor: false,
   author: { id: authorId, username: authorId, displayName: null, avatarUrl: null },
@@ -56,6 +57,7 @@ describe('cache updates', () => {
       followingCount: 0,
       videoCount: 2,
       isFollowing: false,
+      blockedByMe: null,
       createdAt: '2026-10-18T00:00:00.000Z',
     });
   });
@@ -104,6 +106,7 @@ describe('cache updates', () => {
     expect(qc.getQueryData(['video', 'v1'])).toMatchObject({ likedByMe: false, likeCount: 5 });
     expect(qc.getQueryData(['user', 'ben'])).toMatchObject({
       isFollowing: false,
+      blockedByMe: null,
       followerCount: 10,
     });
   });

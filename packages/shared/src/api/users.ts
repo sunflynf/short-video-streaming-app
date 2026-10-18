@@ -15,6 +15,8 @@ export type UserProfile = UserSummary & {
   videoCount: number;
   /** null when the request is anonymous or the profile is the viewer's own. */
   isFollowing: boolean | null;
+  /** Whether the viewer has blocked this user; null when anonymous or for your own profile. */
+  blockedByMe: boolean | null;
   createdAt: string;
 };
 

@@ -114,3 +114,19 @@ export async function signup(
 }
 
 export const bearer = (auth: AuthResponse) => ({ Authorization: `Bearer ${auth.accessToken}` });
+
+/** Signs up a user, promotes them to ADMIN and logs in again so the token carries the role. */
+export async function signupAdmin(
+  app: INestApplication<App>,
+  username = 'admin',
+): Promise<AuthResponse> {
+  const created = await signup(app, { username });
+  await app
+    .get(PrismaService)
+    .user.update({ where: { id: created.user.id }, data: { role: 'ADMIN' } });
+  const res = await request(app.getHttpServer())
+    .post('/v1/auth/login')
+    .send({ email: created.user.email, password: 'password123' })
+    .expect(200);
+  return res.body as AuthResponse;
+}

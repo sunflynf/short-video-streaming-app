@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { NotificationDto, Paginated, UnreadCountResponse } from '@app/shared';
 import { toPage, type PaginationQueryDto } from '../common/pagination.js';
+import { BlocksService } from '../blocks/blocks.service.js';
 import { MEDIA_PROVIDER, type MediaProvider } from '../media/media-provider.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { toUserSummary, userSummarySelect } from '../users/user-mapper.js';
@@ -12,12 +13,13 @@ export class NotificationsService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(MEDIA_PROVIDER) private readonly media: MediaProvider,
+    private readonly blocks: BlocksService,
   ) {}
 
   /** Newest first, with the actor, video thumbnail and comment snippet loaded in batches. */
   async list(userId: string, query: PaginationQueryDto): Promise<Paginated<NotificationDto>> {
     const rows = await this.prisma.notification.findMany({
-      where: { recipientId: userId },
+      where: { recipientId: userId, actorId: { notIn: await this.blocks.hiddenUserIds(userId) } },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: query.limit + 1,
       ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),

@@ -158,19 +158,20 @@ See `backend/.env.example` and `apps/mobile/.env.example`. Each phase plan lists
 Legend: ⬜ planned · 🔄 in progress · ✅ done
 
 ### Phase 1: MVP Foundation
-- ⬜ User management and auth
-- ⬜ Video upload API
-- ⬜ Video streaming (HLS)
-- ⬜ Feed with basic ranking
-- ⬜ Like/unlike
-- ⬜ Follow/unfollow
-- ⬜ Basic mobile app UI
+- ✅ User management and auth
+- ✅ Video upload API
+- ✅ Video streaming (HLS)
+- ✅ Feed with basic ranking
+- ✅ Like/unlike
+- ✅ Follow/unfollow
+- ✅ Basic mobile app UI
+- ✅ Reporting, blocking, moderation and account deletion
 
 ### Phase 2: Social Features
-- ⬜ Comments and replies
-- ⬜ Share functionality
-- ⬜ User notifications
-- ⬜ Creator dashboard
+- ✅ Comments and replies
+- ✅ Share functionality
+- ✅ User notifications
+- 🔄 Creator dashboard (minimal stats on your own profile)
 - ⬜ Search and trending
 - ⬜ Video recommendations
 
@@ -183,14 +184,16 @@ Legend: ⬜ planned · 🔄 in progress · ✅ done
 
 ## Deployment
 
+The step-by-step launch runbook (accounts, secrets, builds, monitoring, rollback) is in [docs/launch.md](./docs/launch.md).
+
 ### Backend
-- Deploy to Railway or Fly.io
-- Use managed PostgreSQL
-- Use Upstash for Redis
+- Docker image (`backend/Dockerfile`) deployed to Railway (`backend/railway.json`); migrations run before each release
+- Managed PostgreSQL on Railway, Upstash for Redis
+- `main` deploys to staging after CI passes; a `v*` tag deploys to production after approval (`.github/workflows/deploy.yml`)
 
 ### Mobile
-- Build APK/IPA with EAS Build (Expo)
-- Deploy to Google Play and App Store
+- EAS Build profiles `development`, `preview` and `production` (`apps/mobile/eas.json`), plus EAS Update for JS-only fixes
+- TestFlight and Play internal testing first, then the stores
 
 ### Web Dashboard
 - Deploy to Vercel
@@ -219,6 +222,6 @@ Next steps after MVP:
 
 ---
 
-**Status:** Phase 1 - Foundation (in development)
+**Status:** MVP built (Phases 0–7); launch steps that need accounts and devices are in [docs/launch.md](./docs/launch.md)
 
-**Last Updated:** 2026-10-10
+**Last Updated:** 2026-10-18

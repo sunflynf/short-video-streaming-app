@@ -21,6 +21,7 @@ const auth: AuthResponse = {
     followingCount: 0,
     videoCount: 0,
     isFollowing: null,
+    blockedByMe: null,
     createdAt: '2026-10-18T00:00:00.000Z',
     email: 'ann@example.com',
     role: 'USER',
