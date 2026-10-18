@@ -4,6 +4,7 @@ import type { AuthUser } from '../common/auth-user.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
 import { PaginationQueryDto } from '../common/pagination.js';
+import { Limit } from '../throttling/limits.js';
 import { CommentsService } from './comments.service.js';
 import { CreateCommentDto } from './dto/create-comment.dto.js';
 
@@ -11,6 +12,7 @@ import { CreateCommentDto } from './dto/create-comment.dto.js';
 export class VideoCommentsController {
   constructor(private readonly comments: CommentsService) {}
 
+  @Limit.comment()
   @Post()
   create(
     @Param('id') videoId: string,

@@ -2,6 +2,7 @@ import { Body, Controller, Post } from '@nestjs/common';
 import type { CreateUploadResponse } from '@app/shared';
 import type { AuthUser } from '../common/auth-user.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import { Limit } from '../throttling/limits.js';
 import { CreateUploadDto } from './dto/create-upload.dto.js';
 import { UploadsService } from './uploads.service.js';
 
@@ -10,6 +11,7 @@ export class UploadsController {
   constructor(private readonly uploads: UploadsService) {}
 
   /** Returns a direct-upload URL; the client PUTs the file there, then polls GET /videos/:id. */
+  @Limit.upload()
   @Post('upload')
   create(
     @CurrentUser() user: AuthUser,

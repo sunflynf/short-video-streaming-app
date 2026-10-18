@@ -3,6 +3,7 @@ import type { AuthResponse, MeProfile } from '@app/shared';
 import type { AuthUser } from '../common/auth-user.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
+import { Limit } from '../throttling/limits.js';
 import { UsersService } from '../users/users.service.js';
 import { AuthService } from './auth.service.js';
 import {
@@ -21,12 +22,14 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Limit.signup()
   @Post('signup')
   signup(@Body() dto: SignupDto): Promise<AuthResponse> {
     return this.auth.signup(dto);
   }
 
   @Public()
+  @Limit.login()
   @Post('login')
   @HttpCode(200)
   login(@Body() dto: LoginDto): Promise<AuthResponse> {
@@ -52,6 +55,7 @@ export class AuthController {
   }
 
   @Public()
+  @Limit.passwordReset()
   @Post('forgot-password')
   @HttpCode(204)
   forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
@@ -59,6 +63,7 @@ export class AuthController {
   }
 
   @Public()
+  @Limit.passwordReset()
   @Post('reset-password')
   @HttpCode(204)
   resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {

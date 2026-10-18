@@ -1,8 +1,15 @@
-import { QueryClient, QueryClientProvider, focusManager } from '@tanstack/react-query';
+import { Sentry, sentryEnabled, setSentryUser } from '../lib/sentry';
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+  focusManager,
+} from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { AppState, Platform } from 'react-native';
+import { Alert, AppState, Platform } from 'react-native';
 import { ApiRequestError } from '../services/api';
 import { useAuth } from '../store/auth';
 
@@ -13,8 +20,20 @@ if (Platform.OS !== 'web') {
   AppState.addEventListener('change', (state) => focusManager.setFocused(state === 'active'));
 }
 
+let lastRateLimitAlert = 0;
+
+/** One friendly message for any 429, at most every 10 s, instead of a cascade of errors. */
+function onApiError(err: unknown) {
+  if (!(err instanceof ApiRequestError) || err.status !== 429) return;
+  if (Date.now() - lastRateLimitAlert < 10_000) return;
+  lastRateLimitAlert = Date.now();
+  Alert.alert('Slow down a little', 'You’re doing that too often. Please try again in a minute.');
+}
+
 const createQueryClient = () =>
   new QueryClient({
+    queryCache: new QueryCache({ onError: onApiError }),
+    mutationCache: new MutationCache({ onError: onApiError }),
     defaultOptions: {
       queries: {
         staleTime: 30_000,
@@ -24,7 +43,7 @@ const createQueryClient = () =>
     },
   });
 
-export default function RootLayout() {
+function RootLayout() {
   const [queryClient] = useState(createQueryClient);
   const { hydrated, session, hydrate } = useAuth();
   const userId = session?.user.id;
@@ -36,6 +55,7 @@ export default function RootLayout() {
   // Never show one account's cached data to another.
   useEffect(() => {
     queryClient.clear();
+    setSentryUser(userId);
   }, [queryClient, userId]);
 
   if (!hydrated) return null;
@@ -71,3 +91,5 @@ export default function RootLayout() {
     </QueryClientProvider>
   );
 }
+
+export default sentryEnabled ? Sentry.wrap(RootLayout) : RootLayout;

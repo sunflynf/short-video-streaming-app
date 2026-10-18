@@ -52,7 +52,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      # Unit + e2e (incl. the golden path) with a 70% line-coverage gate on services.
       # Migrates a separate `app_test` database itself (see backend/test/global-setup.ts).
-      - name: Backend e2e
+      - name: Backend e2e + coverage
         working-directory: backend
-        run: pnpm test:e2e
+        run: pnpm test:cov

@@ -14,3 +14,6 @@ process.env.R2_ACCESS_KEY_ID = 'test-key';
 process.env.R2_SECRET_ACCESS_KEY = 'test-secret';
 process.env.R2_BUCKET = 'test-avatars';
 process.env.R2_PUBLIC_URL = 'https://avatars.example.com';
+// Most suites make many requests from one IP; throttles.e2e-spec.ts turns limits back on.
+process.env.THROTTLE_ENABLED = 'false';
+process.env.LOG_LEVEL = 'silent';

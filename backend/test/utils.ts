@@ -57,7 +57,7 @@ export async function resetDb(app: INestApplication): Promise<void> {
   }
   // Feed snapshots, seen sets and view debounce keys (test Redis db only, see setup-env.ts).
   const redis = app.get<Redis>(REDIS);
-  for (const pattern of ['feed:*', 'seen:*', 'view:*', 'share:*']) {
+  for (const pattern of ['feed:*', 'seen:*', 'view:*', 'share:*', 'throttle:*']) {
     const keys = await redis.keys(pattern);
     if (keys.length) await redis.del(...keys);
   }

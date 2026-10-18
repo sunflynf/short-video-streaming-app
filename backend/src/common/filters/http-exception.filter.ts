@@ -10,8 +10,16 @@ import type { ApiError } from '@app/shared';
 import type { Request, Response } from 'express';
 import { STATUS_CODES } from 'node:http';
 import { Prisma } from '../../generated/prisma/client.js';
+import { reportError } from '../../observability/report-error.js';
+import type { AuthUser } from '../auth-user.js';
 import { uniqueViolationFields } from '../prisma-errors.js';
 import { REQUEST_ID_HEADER } from '../middleware/request-id.middleware.js';
+
+const CLIENT_ERROR_MESSAGES: Record<number, string> = {
+  400: 'Malformed request body',
+  413: 'Request body too large',
+  415: 'Unsupported content type',
+};
 
 /** Renders every error as the shared ApiError shape. */
 @Catch()
@@ -27,6 +35,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     // Deliberate HttpExceptions (e.g. a 503 for missing config) aren't bugs; log only the rest.
     if (statusCode >= 500 && !(exception instanceof HttpException)) {
       this.logger.error(exception instanceof Error ? exception.stack : String(exception));
+      reportError(exception, {
+        requestId: req.header(REQUEST_ID_HEADER),
+        userId: (req.user as AuthUser | undefined)?.id,
+      });
     }
 
     const body: ApiError = {
@@ -58,6 +70,11 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (exception.code === 'P2025') {
         return { statusCode: HttpStatus.NOT_FOUND, message: 'Not found' };
       }
+    }
+    // Errors from Express middleware (body-parser: too large, malformed JSON) carry a 4xx status.
+    const status = (exception as { status?: unknown } | null)?.status;
+    if (typeof status === 'number' && status >= 400 && status < 500) {
+      return { statusCode: status, message: CLIENT_ERROR_MESSAGES[status] ?? 'Bad request' };
     }
     return { statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message: 'Internal server error' };
   }

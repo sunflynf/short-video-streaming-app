@@ -4,6 +4,7 @@ import type { Request } from 'express';
 import type { AuthUser } from '../common/auth-user.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
+import { Limit } from '../throttling/limits.js';
 import { FeedQueryDto } from './dto/feed-query.dto.js';
 import { RecordViewDto } from './dto/record-view.dto.js';
 import { FeedService } from './feed.service.js';
@@ -29,6 +30,7 @@ export class FeedController {
   }
 
   @Public()
+  @Limit.engagement()
   @Post(':id/view')
   @HttpCode(204)
   view(

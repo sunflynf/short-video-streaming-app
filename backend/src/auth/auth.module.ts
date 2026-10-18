@@ -8,12 +8,15 @@ import type { Env } from '../config/env.js';
 import { UsersModule } from '../users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
+import { AppThrottlerGuard } from '../throttling/app-throttler.guard.js';
+import { ThrottlingModule } from '../throttling/throttling.module.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 
 @Module({
   imports: [
     UsersModule,
+    ThrottlingModule,
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -30,9 +33,10 @@ import { JwtStrategy } from './strategies/jwt.strategy.js';
   providers: [
     AuthService,
     JwtStrategy,
-    // Order matters: authenticate first, then check roles.
+    // Order matters: authenticate first, then check roles, then rate-limit (keyed by user).
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: AppThrottlerGuard },
   ],
 })
 export class AuthModule {}

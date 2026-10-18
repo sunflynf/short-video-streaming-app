@@ -38,6 +38,12 @@
         {
           "photosPermission": "ShortVid needs access to your library to upload videos and set your profile photo."
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/"
+        }
       ]
     ],
     "experiments": {

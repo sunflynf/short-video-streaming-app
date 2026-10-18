@@ -29,6 +29,22 @@ const envSchema = z.object({
   R2_SECRET_ACCESS_KEY: optionalString,
   R2_BUCKET: optionalString,
   R2_PUBLIC_URL: z.preprocess((v) => (v === '' ? undefined : v), z.url().optional()),
+  LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  /** Prisma queries slower than this are logged as warnings. */
+  SLOW_QUERY_MS: z.coerce.number().int().positive().default(200),
+  /** Optional: errors are reported to Sentry when set (see src/instrument.ts). */
+  SENTRY_DSN: optionalString,
+  SENTRY_RELEASE: optionalString,
+  // Rate limiting (Redis-backed). Disable only in tests.
+  THROTTLE_ENABLED: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
+  THROTTLE_DEFAULT_PER_MIN: z.coerce.number().int().positive().default(100),
+  /** Proxy hops in front of the API (1 on Railway) so req.ip is the client from X-Forwarded-For. */
+  TRUST_PROXY: z.coerce.number().int().min(0).default(0),
+  /** Comma-separated browser origins allowed by CORS. Empty: any origin outside production, none in it. */
+  CORS_ORIGINS: optionalString,
   /** Base URL for share links (`${PUBLIC_WEB_URL}/v/:id`). */
   PUBLIC_WEB_URL: z.url().default('http://localhost:3000'),
 });

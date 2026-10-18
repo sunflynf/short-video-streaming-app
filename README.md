@@ -107,7 +107,7 @@ See [TIMELINE.md](./TIMELINE.md) for detailed development phases and [docs/plans
 
 ## Architecture
 
-See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structure.
+See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structure. Security posture (authorization table, limits, audit): [docs/security.md](./docs/security.md).
 
 ## Getting Started
 
@@ -146,6 +146,7 @@ curl http://localhost:3000/v1/health
 # Checks (backend e2e uses a separate <db>_test database and Redis db 1)
 pnpm lint && pnpm typecheck && pnpm test
 pnpm --filter backend test:e2e
+pnpm --filter backend test:cov   # unit + e2e with the 70% service coverage gate (as CI runs it)
 ```
 
 ### Environment Variables

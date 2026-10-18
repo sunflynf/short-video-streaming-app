@@ -1,9 +1,10 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Job } from 'bullmq';
 import type { Env } from '../config/env.js';
 import type { Prisma } from '../generated/prisma/client.js';
+import { onJobFailed } from '../observability/job-failures.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MEDIA_PROVIDER, type MediaEvent, type MediaProvider } from './media-provider.js';
 import { MEDIA_QUEUE, MediaJob, type MediaJobData } from './media.constants.js';
@@ -43,6 +44,11 @@ export class MediaProcessor extends WorkerHost {
       case MediaJob.CancelUpload:
         return this.media.cancelUpload(data.uploadId);
     }
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job | undefined, error: Error): void {
+    onJobFailed(this.logger, MEDIA_QUEUE, job, error);
   }
 
   private async handleEvent(event: MediaEvent): Promise<void> {

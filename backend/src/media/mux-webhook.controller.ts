@@ -9,12 +9,14 @@ import {
   UnauthorizedException,
   type RawBodyRequest,
 } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { Public } from '../common/decorators/public.decorator.js';
 import { MEDIA_PROVIDER, type MediaEvent, type MediaProvider } from './media-provider.js';
 import { MediaQueue } from './media.queue.js';
 
 @Public()
+@SkipThrottle()
 @Controller('webhooks')
 export class MuxWebhookController {
   private readonly logger = new Logger(MuxWebhookController.name);

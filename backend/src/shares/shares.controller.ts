@@ -4,6 +4,7 @@ import type { Request, Response } from 'express';
 import type { AuthUser } from '../common/auth-user.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
+import { Limit } from '../throttling/limits.js';
 import { ShareDto } from './dto/share.dto.js';
 import { NOT_FOUND_PAGE } from './share-page.js';
 import { SharesService } from './shares.service.js';
@@ -13,6 +14,7 @@ export class SharesController {
   constructor(private readonly shares: SharesService) {}
 
   @Public()
+  @Limit.engagement()
   @Post()
   @HttpCode(200)
   share(

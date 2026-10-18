@@ -1,11 +1,20 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
+import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
+import { onJobFailed } from '../observability/job-failures.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NOTIFICATIONS_QUEUE } from './notifications.constants.js';
 import { planNotifications, type NotificationTrigger } from './plan-notifications.js';
 
 @Processor(NOTIFICATIONS_QUEUE)
 export class NotificationsProcessor extends WorkerHost {
+  private readonly logger = new Logger(NotificationsProcessor.name);
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job | undefined, error: Error): void {
+    onJobFailed(this.logger, NOTIFICATIONS_QUEUE, job, error);
+  }
+
   constructor(private readonly prisma: PrismaService) {
     super();
   }

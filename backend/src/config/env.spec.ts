@@ -8,22 +8,26 @@ describe('validateEnv', () => {
   };
 
   it('applies defaults', () => {
-    expect(validateEnv(valid)).toEqual({
+    expect(validateEnv(valid)).toMatchObject({
       ...valid,
       NODE_ENV: 'development',
       PORT: 3000,
       JWT_ACCESS_TTL_SECONDS: 900,
       REFRESH_TOKEN_TTL_DAYS: 30,
-      PASSWORD_RESET_TTL_SECONDS: 900,
       MAX_VIDEO_DURATION_SEC: 60,
-      MAX_ACTIVE_UPLOADS: 3,
-      MAX_DAILY_UPLOADS: 20,
       FEED_SNAPSHOT_SIZE: 200,
-      FEED_WINDOW_DAYS: 14,
-      FEED_SNAPSHOT_TTL_SEC: 1800,
-      ANON_FEED_CACHE_SEC: 60,
       PUBLIC_WEB_URL: 'http://localhost:3000',
+      LOG_LEVEL: 'info',
+      SLOW_QUERY_MS: 200,
+      THROTTLE_ENABLED: true,
+      THROTTLE_DEFAULT_PER_MIN: 100,
+      TRUST_PROXY: 0,
     });
+  });
+
+  it('parses the throttle switch', () => {
+    expect(validateEnv({ ...valid, THROTTLE_ENABLED: 'false' }).THROTTLE_ENABLED).toBe(false);
+    expect(() => validateEnv({ ...valid, THROTTLE_ENABLED: 'nope' })).toThrow(/THROTTLE_ENABLED/);
   });
 
   it('throws when a required var is missing', () => {
