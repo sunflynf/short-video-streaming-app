@@ -1,0 +1,10 @@
+// Phase 0 placeholder: models are added in Phase 1 (docs/plans/phase-1-backend-core.md).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}

@@ -13,7 +13,7 @@ Run staging and production environments, ship builds to beta testers (TestFlight
 ## Tasks
 
 ### Days 53–54 — Backend deployment
-- [ ] `backend/Dockerfile` (multi-stage, `node:20-slim`, `prisma generate` at build time, non-root user)
+- [ ] `backend/Dockerfile` (multi-stage, `node:22-slim`, `prisma generate` at build time, non-root user)
 - [ ] Railway project with `staging` and `production` environments, each with its own Postgres. Upstash Redis per environment.
 - [ ] Release command: `prisma migrate deploy` runs before the new version takes traffic
 - [ ] GitHub Actions: `main` → deploy to staging automatically; a tag `v*` → deploy to production (manual approval via environment protection)

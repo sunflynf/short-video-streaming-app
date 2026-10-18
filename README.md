@@ -112,8 +112,8 @@ See [STRUCTURE.md](./STRUCTURE.md) for detailed architecture and folder structur
 ## Getting Started
 
 ### Prerequisites
-- Node.js 20+
-- pnpm 9
+- Node.js 22 (see `.nvmrc`)
+- pnpm 10 (`corepack enable` picks up the pinned version)
 - Docker (runs local PostgreSQL + Redis)
 
 ### Installation
@@ -130,13 +130,16 @@ pnpm install
 
 # Backend
 cp backend/.env.example backend/.env
-pnpm --filter backend exec prisma migrate dev
+pnpm --filter backend exec prisma migrate dev   # no-op until Phase 1 adds models
 
 # Mobile
 cp apps/mobile/.env.example apps/mobile/.env
 
 # Run API + Expo together
 pnpm dev
+
+# API health check
+curl http://localhost:3000/v1/health
 ```
 
 ### Environment Variables

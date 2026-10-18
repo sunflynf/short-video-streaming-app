@@ -32,11 +32,14 @@ packages/shared      Shared TS types, API DTO shapes, constants
 
 ## D2 — NestJS (Express adapter)
 
+- NestJS 12 is ESM-only, so `backend` is an ESM package and is tested with Vitest (the Nest 12 ESM starter's default).
+
 - **Why:** the module structure already matches `STRUCTURE.md`. The Express adapter has the widest middleware compatibility (Mux webhook raw body, multer). The Fastify adapter is unnecessary for the MVP.
 - **Revisit when:** profiling shows HTTP overhead is the bottleneck.
 
 ## D3 — PostgreSQL + Prisma
 
+- Prisma 7: the connection URL lives in `backend/prisma.config.ts`, and the client uses the `@prisma/adapter-pg` driver adapter.
 - **Why:** social data is relational (follows, likes, comments). Prisma migrations are fast for a solo developer.
 - **Revisit when:** feed queries need SQL that Prisma can't express well. Use `$queryRaw` for those queries rather than switching ORMs.
 

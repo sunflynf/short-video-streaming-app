@@ -206,7 +206,7 @@ REFRESH_TOKEN_TTL_DAYS=30
 
 ## Tests
 - Unit: `AuthService` (hash and verify, rotation, reuse detection), `FollowsService` (self-follow, idempotency).
-- E2E (supertest against the test DB, truncated per test file): the full auth flow, profile update permissions, follow/unfollow counts.
+- E2E (Vitest + supertest against the test DB, truncated per test file): the full auth flow, profile update permissions, follow/unfollow counts.
 
 ## Risks & notes
 - **Password reset** needs an email provider. Stub a `POST /auth/forgot-password` that logs the token in development. Add Resend or Postmark in Phase 7 if beta users need it.

@@ -33,7 +33,7 @@ Make the core flows reliable and observable, and block the obvious abuse vectors
 - [ ] Extend `/health` with a queue depth check
 
 ### Days 49–50 — Test coverage
-- [ ] E2E suites (supertest, real Postgres + Redis in CI, provider mocked) covering the **golden path**: signup → upload (simulated webhooks) → READY → appears in another user's feed → like → comment → notification → follow → Following feed
+- [ ] E2E suites (Vitest + supertest, real Postgres + Redis in CI, provider mocked) covering the **golden path**: signup → upload (simulated webhooks) → READY → appears in another user's feed → like → comment → notification → follow → Following feed
 - [ ] Concurrency tests: parallel like/unlike and follow/unfollow keep the counts consistent
 - [ ] Coverage target: ≥ 70% lines on `auth`, `feed`, `likes`, `comments`, `notifications`, `media` services
 - [ ] Mobile: smoke test of the `api.ts` and auth flows; optionally a Maestro flow for login → feed → like
