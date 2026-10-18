@@ -1,9 +1,11 @@
 import { Controller, Get, Inject, ServiceUnavailableException } from '@nestjs/common';
 import type { HealthResponse } from '@app/shared';
 import { Redis } from 'ioredis';
+import { Public } from '../common/decorators/public.decorator.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { REDIS } from '../redis/redis.module.js';
 
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(
@@ -23,14 +25,9 @@ export class HealthController {
         () => 'error' as const,
       ),
     ]);
-    const body: HealthResponse = {
-      status: db === 'ok' && redis === 'ok' ? 'ok' : 'error',
-      db,
-      redis,
-    };
-    if (body.status !== 'ok') {
-      throw new ServiceUnavailableException(body);
+    if (db !== 'ok' || redis !== 'ok') {
+      throw new ServiceUnavailableException(`Health check failed (db: ${db}, redis: ${redis})`);
     }
-    return body;
+    return { status: 'ok', db, redis };
   }
 }

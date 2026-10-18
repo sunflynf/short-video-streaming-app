@@ -47,6 +47,7 @@ packages/shared      Shared TS types, API DTO shapes, constants
 
 - Short-lived access token (15 min) plus a rotating refresh token (30 days). Refresh tokens are stored hashed in a `RefreshToken` table so they can be revoked.
 - Passwords are hashed with `argon2`.
+- Password reset (until email is set up) uses a short-lived JWT signed with the secret plus the current password hash, so it's single-use without a token table.
 - **Why:** no vendor lock-in or per-MAU cost, and the user table stays in our DB with no sync webhooks. This is enough for email + password.
 - **Revisit when:** social login (Apple/Google), magic links, or MFA are needed. At that point, compare the cost of adding them against migrating to Clerk.
 

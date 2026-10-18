@@ -1,4 +1,4 @@
-// Phase 0 placeholder: models are added in Phase 1 (docs/plans/phase-1-backend-core.md).
+// MVP data model. See docs/plans/phase-1-backend-core.md for the contract.
 
 generator client {
   provider = "prisma-client"
@@ -7,4 +7,141 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum VideoStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  REPLY
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  username       String   @unique
+  passwordHash   String
+  displayName    String?
+  bio            String?  @db.VarChar(160)
+  avatarUrl      String?
+  role           Role     @default(USER)
+  followerCount  Int      @default(0)
+  followingCount Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  videos        Video[]
+  likes         Like[]
+  comments      Comment[]
+  followers     Follow[]       @relation("following")
+  following     Follow[]       @relation("follower")
+  refreshTokens RefreshToken[]
+  notifications Notification[] @relation("recipient")
+  actedNotifs   Notification[] @relation("actor")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Video {
+  id            String      @id @default(cuid())
+  authorId      String
+  caption       String?     @db.VarChar(300)
+  status        VideoStatus @default(UPLOADING)
+  muxUploadId   String?     @unique
+  muxAssetId    String?     @unique
+  muxPlaybackId String?
+  durationSec   Float?
+  aspectRatio   String?
+  likeCount     Int         @default(0)
+  commentCount  Int         @default(0)
+  shareCount    Int         @default(0)
+  viewCount     Int         @default(0)
+  hidden        Boolean     @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  author        User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes         Like[]
+  comments      Comment[]
+
+  @@index([authorId, publishedAt])
+  @@index([status, publishedAt])
+}
+
+model Like {
+  userId    String
+  videoId   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@id([userId, videoId])
+  @@index([videoId])
+}
+
+model Comment {
+  id         String    @id @default(cuid())
+  videoId    String
+  authorId   String
+  parentId   String?
+  body       String    @db.VarChar(500)
+  replyCount Int       @default(0)
+  createdAt  DateTime  @default(now())
+  deletedAt  DateTime?
+  video      Video     @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent     Comment?  @relation("replies", fields: [parentId], references: [id])
+  replies    Comment[] @relation("replies")
+
+  @@index([videoId, createdAt])
+  @@index([parentId, createdAt])
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId, createdAt])
+  @@index([followerId, createdAt])
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  recipientId String
+  actorId     String
+  type        NotificationType
+  videoId     String?
+  commentId   String?
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  recipient   User             @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  actor       User             @relation("actor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, createdAt])
 }

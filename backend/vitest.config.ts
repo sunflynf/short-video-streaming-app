@@ -5,5 +5,7 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['src/**/*.spec.ts'],
+    // Decorated DTOs need the Reflect metadata polyfill that Nest normally loads.
+    setupFiles: ['reflect-metadata'],
   },
 });

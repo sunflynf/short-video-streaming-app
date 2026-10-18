@@ -1,25 +1,29 @@
 import type { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule } from '../src/app.module.js';
-import { setupApp } from '../src/setup-app.js';
+import type { App } from 'supertest/types.js';
+import { createTestApp } from './utils.js';
 
 describe('GET /v1/health', () => {
-  let app: INestApplication;
+  let app: INestApplication<App>;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
-    app = moduleRef.createNestApplication();
-    setupApp(app);
-    await app.init();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
     await app.close();
   });
 
-  it('reports db and redis as ok', async () => {
+  it('reports db and redis as ok without auth', async () => {
     const res = await request(app.getHttpServer()).get('/v1/health').expect(200);
     expect(res.body).toEqual({ status: 'ok', db: 'ok', redis: 'ok' });
+  });
+
+  it('echoes or assigns a request id', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/v1/health')
+      .set('x-request-id', 'abc-123')
+      .expect(200);
+    expect(res.headers['x-request-id']).toBe('abc-123');
   });
 });

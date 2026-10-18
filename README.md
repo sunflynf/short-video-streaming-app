@@ -130,7 +130,8 @@ pnpm install
 
 # Backend
 cp backend/.env.example backend/.env
-pnpm --filter backend exec prisma migrate dev   # no-op until Phase 1 adds models
+pnpm --filter backend exec prisma migrate dev
+pnpm --filter backend prisma:seed   # 5 demo users, password "password123"
 
 # Mobile
 cp apps/mobile/.env.example apps/mobile/.env
@@ -140,6 +141,11 @@ pnpm dev
 
 # API health check
 curl http://localhost:3000/v1/health
+# API docs: http://localhost:3000/docs
+
+# Checks (backend e2e uses a separate <db>_test database)
+pnpm lint && pnpm typecheck && pnpm test
+pnpm --filter backend test:e2e
 ```
 
 ### Environment Variables

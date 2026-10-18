@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module.js';
 import type { Env } from './config/env.js';
 import { setupApp } from './setup-app.js';
@@ -7,8 +8,22 @@ import { setupApp } from './setup-app.js';
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   setupApp(app);
-  const port = app.get(ConfigService<Env, true>).get('PORT', { infer: true });
-  await app.listen(port, '0.0.0.0');
+
+  const config = app.get(ConfigService<Env, true>);
+  if (config.get('NODE_ENV', { infer: true }) !== 'production') {
+    const document = SwaggerModule.createDocument(
+      app,
+      new DocumentBuilder()
+        .setTitle('ShortVid API')
+        .setVersion('v1')
+        .addBearerAuth()
+        .addSecurityRequirements('bearer')
+        .build(),
+    );
+    SwaggerModule.setup('docs', app, document);
+  }
+
+  await app.listen(config.get('PORT', { infer: true }), '0.0.0.0');
 }
 
 await bootstrap();
