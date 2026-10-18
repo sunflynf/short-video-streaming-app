@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
-import type { MeProfile, Paginated, UserProfile } from '@app/shared';
+import type { MeProfile, UserProfile } from '@app/shared';
 import type { AuthUser } from '../common/auth-user.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
 import { Public } from '../common/decorators/public.decorator.js';
@@ -32,11 +32,5 @@ export class UsersController {
     @Body() dto: UpdateUserDto,
   ): Promise<MeProfile> {
     return this.users.update(id, actor, dto);
-  }
-
-  @Public()
-  @Get(':id/videos')
-  listVideos(@Param('id') id: string): Promise<Paginated<never>> {
-    return this.users.listVideos(id);
   }
 }

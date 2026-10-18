@@ -24,7 +24,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const res = ctx.getResponse<Response>();
     const { statusCode, message } = this.resolve(exception);
 
-    if (statusCode >= 500) {
+    // Deliberate HttpExceptions (e.g. a 503 for missing config) aren't bugs; log only the rest.
+    if (statusCode >= 500 && !(exception instanceof HttpException)) {
       this.logger.error(exception instanceof Error ? exception.stack : String(exception));
     }
 

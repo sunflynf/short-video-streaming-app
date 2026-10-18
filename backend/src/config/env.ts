@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** Blank values (`MUX_TOKEN_ID=` in .env) count as unset. */
+const optionalString = z.preprocess((v) => (v === '' ? undefined : v), z.string().optional());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -9,6 +12,13 @@ const envSchema = z.object({
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
   PASSWORD_RESET_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  // Optional so the API boots without Mux; uploads and webhooks return 503 until they're set.
+  MUX_TOKEN_ID: optionalString,
+  MUX_TOKEN_SECRET: optionalString,
+  MUX_WEBHOOK_SECRET: optionalString,
+  MAX_VIDEO_DURATION_SEC: z.coerce.number().positive().default(60),
+  MAX_ACTIVE_UPLOADS: z.coerce.number().int().positive().default(3),
+  MAX_DAILY_UPLOADS: z.coerce.number().int().positive().default(20),
 });
 
 export type Env = z.infer<typeof envSchema>;

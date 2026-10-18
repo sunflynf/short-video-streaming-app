@@ -69,6 +69,7 @@ packages/shared      Shared TS types, API DTO shapes, constants
 - Queues: `media` (Mux webhook processing) and `notifications` (fan-out).
 - Redis is also used by the rate limiter (`@nestjs/throttler` storage) and the short-lived feed cache.
 - **Why:** webhook handlers return 200 quickly, and retries are automatic.
+- Webhook redeliveries are deduped by using the provider's event id as the BullMQ job id, and state changes are conditional updates, so replays are safe without a separate idempotency key.
 - **Revisit when:** never for the MVP.
 
 ## D8 — Expo + Expo Router + `expo-video`

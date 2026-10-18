@@ -150,7 +150,7 @@ pnpm --filter backend test:e2e
 
 ### Environment Variables
 
-See `backend/.env.example` and `apps/mobile/.env.example`. Each phase plan lists the variables it introduces.
+See `backend/.env.example` and `apps/mobile/.env.example`. Each phase plan lists the variables it introduces. The `MUX_*` keys are optional; without them the API runs, but video uploads return 503. To test real uploads, see [Run it against real Mux](./docs/plans/phase-2-media.md#run-it-against-real-mux).
 
 ## Features by Phase
 

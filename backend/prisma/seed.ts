@@ -1,4 +1,6 @@
 // Dev seed: 5 users (password "password123") with some follows. Safe to re-run.
+// Set SEED_MUX_PLAYBACK_IDS (comma-separated public playback ids from your Mux account)
+// to also create READY videos for feed work without uploading.
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as argon2 from 'argon2';
@@ -53,7 +55,34 @@ async function main(): Promise<void> {
       "followerCount"  = (SELECT count(*) FROM "Follow" f WHERE f."followingId" = u.id),
       "followingCount" = (SELECT count(*) FROM "Follow" f WHERE f."followerId" = u.id)`;
 
-  console.log(`Seeded ${users.length} users and ${follows.length} follows`);
+  const playbackIds = (process.env.SEED_MUX_PLAYBACK_IDS ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean);
+  const authors = [...ids.values()];
+  let videos = 0;
+  for (const [i, playbackId] of playbackIds.entries()) {
+    const existing = await prisma.video.findFirst({ where: { muxPlaybackId: playbackId } });
+    if (existing) continue;
+    await prisma.video.create({
+      data: {
+        authorId: authors[i % authors.length]!,
+        caption: `Seed clip ${i + 1}`,
+        status: 'READY',
+        muxPlaybackId: playbackId,
+        durationSec: 15,
+        aspectRatio: '9:16',
+        // Spread publish times over the last two weeks so feed ranking has something to sort.
+        publishedAt: new Date(Date.now() - i * 6 * 60 * 60 * 1000),
+      },
+    });
+    videos += 1;
+  }
+
+  console.log(
+    `Seeded ${users.length} users, ${follows.length} follows and ${videos} new videos` +
+      (playbackIds.length ? '' : ' (set SEED_MUX_PLAYBACK_IDS to add videos)'),
+  );
 }
 
 try {

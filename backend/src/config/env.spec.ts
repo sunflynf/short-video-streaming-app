@@ -15,11 +15,18 @@ describe('validateEnv', () => {
       JWT_ACCESS_TTL_SECONDS: 900,
       REFRESH_TOKEN_TTL_DAYS: 30,
       PASSWORD_RESET_TTL_SECONDS: 900,
+      MAX_VIDEO_DURATION_SEC: 60,
+      MAX_ACTIVE_UPLOADS: 3,
+      MAX_DAILY_UPLOADS: 20,
     });
   });
 
   it('throws when a required var is missing', () => {
     expect(() => validateEnv({ ...valid, DATABASE_URL: undefined })).toThrow(/DATABASE_URL/);
+  });
+
+  it('treats blank optional values as unset', () => {
+    expect(validateEnv({ ...valid, MUX_TOKEN_ID: '' }).MUX_TOKEN_ID).toBeUndefined();
   });
 
   it('rejects a short JWT secret', () => {

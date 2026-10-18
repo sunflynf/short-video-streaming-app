@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import type { MeProfile, Paginated, UserProfile } from '@app/shared';
+import type { MeProfile, UserProfile } from '@app/shared';
 import type { Prisma } from '../generated/prisma/client.js';
 import type { AuthUser } from '../common/auth-user.js';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -40,12 +40,6 @@ export class UsersService {
       select: meProfileSelect,
     });
     return toMeProfile(user);
-  }
-
-  /** Filled in by Phase 2 once videos can be uploaded. */
-  async listVideos(id: string): Promise<Paginated<never>> {
-    await this.assertExists(id);
-    return { items: [], nextCursor: null };
   }
 
   async assertExists(id: string): Promise<void> {
