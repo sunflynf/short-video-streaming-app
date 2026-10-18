@@ -3,6 +3,7 @@ import type { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import type { Queue } from 'bullmq';
+import type { Redis } from 'ioredis';
 import { createHmac } from 'node:crypto';
 import type { AuthResponse } from '@app/shared';
 import request from 'supertest';
@@ -12,6 +13,7 @@ import type { Env } from '../src/config/env.js';
 import { MEDIA_PROVIDER } from '../src/media/media-provider.js';
 import { MEDIA_QUEUE } from '../src/media/media.constants.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
+import { REDIS } from '../src/redis/redis.module.js';
 import { setupApp } from '../src/setup-app.js';
 import { StubMuxProvider } from './stub-mux.provider.js';
 
@@ -48,6 +50,12 @@ export async function resetDb(app: INestApplication): Promise<void> {
   await queue.pause();
   await queue.obliterate({ force: true });
   await queue.resume();
+  // Feed snapshots, seen sets and view debounce keys (test Redis db only, see setup-env.ts).
+  const redis = app.get<Redis>(REDIS);
+  for (const pattern of ['feed:*', 'seen:*', 'view:*']) {
+    const keys = await redis.keys(pattern);
+    if (keys.length) await redis.del(...keys);
+  }
   mediaStub(app).reset();
 }
 

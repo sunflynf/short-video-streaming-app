@@ -79,10 +79,42 @@ async function main(): Promise<void> {
     videos += 1;
   }
 
+  const loadVideos = await seedLoadTestVideos(authors);
+
   console.log(
-    `Seeded ${users.length} users, ${follows.length} follows and ${videos} new videos` +
-      (playbackIds.length ? '' : ' (set SEED_MUX_PLAYBACK_IDS to add videos)'),
+    `Seeded ${users.length} users, ${follows.length} follows and ${videos + loadVideos} new videos` +
+      (playbackIds.length || loadVideos ? '' : ' (set SEED_MUX_PLAYBACK_IDS to add videos)'),
   );
+}
+
+/**
+ * `pnpm prisma:seed -- --videos 10000` adds READY "load-test" videos with random engagement
+ * spread over 30 days, for EXPLAIN ANALYZE and latency checks. Their playback ids are fake.
+ * Remove them with: DELETE FROM "Video" WHERE caption = 'load-test';
+ */
+async function seedLoadTestVideos(authors: string[]): Promise<number> {
+  const flag = process.argv.indexOf('--videos');
+  const count = flag >= 0 ? Number(process.argv[flag + 1]) : 0;
+  if (!Number.isInteger(count) || count <= 0) return 0;
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  for (let done = 0; done < count; done += 1000) {
+    const batch = Math.min(1000, count - done);
+    await prisma.video.createMany({
+      data: Array.from({ length: batch }, (_, i) => ({
+        authorId: authors[(done + i) % authors.length]!,
+        caption: 'load-test',
+        status: 'READY' as const,
+        muxPlaybackId: `load_${done + i}`,
+        durationSec: 15,
+        likeCount: Math.floor(Math.random() ** 3 * 5000),
+        commentCount: Math.floor(Math.random() ** 3 * 500),
+        shareCount: Math.floor(Math.random() ** 3 * 200),
+        hidden: Math.random() < 0.01,
+        publishedAt: new Date(Date.now() - Math.random() * 30 * DAY_MS),
+      })),
+    });
+  }
+  return count;
 }
 
 try {

@@ -19,6 +19,10 @@ const envSchema = z.object({
   MAX_VIDEO_DURATION_SEC: z.coerce.number().positive().default(60),
   MAX_ACTIVE_UPLOADS: z.coerce.number().int().positive().default(3),
   MAX_DAILY_UPLOADS: z.coerce.number().int().positive().default(20),
+  FEED_SNAPSHOT_SIZE: z.coerce.number().int().positive().default(200),
+  FEED_WINDOW_DAYS: z.coerce.number().positive().default(14),
+  FEED_SNAPSHOT_TTL_SEC: z.coerce.number().int().positive().default(1800),
+  ANON_FEED_CACHE_SEC: z.coerce.number().int().positive().default(60),
 });
 
 export type Env = z.infer<typeof envSchema>;

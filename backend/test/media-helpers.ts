@@ -68,3 +68,37 @@ export async function publishVideo(
   await waitForStatus(app, videoId, 'READY');
   return videoId;
 }
+
+let readyCounter = 0;
+
+/** Inserts a READY video directly (much faster than driving uploads through webhooks). */
+export async function createReadyVideo(
+  app: INestApplication,
+  authorId: string,
+  overrides: Partial<{
+    likeCount: number;
+    commentCount: number;
+    shareCount: number;
+    publishedAt: Date;
+    hidden: boolean;
+    durationSec: number;
+    caption: string;
+  }> = {},
+): Promise<string> {
+  readyCounter += 1;
+  const video = await app.get(PrismaService).video.create({
+    data: {
+      authorId,
+      status: 'READY',
+      muxPlaybackId: `pb_ready_${readyCounter}`,
+      durationSec: 15,
+      publishedAt: new Date(),
+      caption: `ready ${readyCounter}`,
+      ...overrides,
+    },
+    select: { id: true },
+  });
+  return video.id;
+}
+
+export const hoursAgo = (hours: number) => new Date(Date.now() - hours * 60 * 60 * 1000);

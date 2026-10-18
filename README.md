@@ -143,7 +143,7 @@ pnpm dev
 curl http://localhost:3000/v1/health
 # API docs: http://localhost:3000/docs
 
-# Checks (backend e2e uses a separate <db>_test database)
+# Checks (backend e2e uses a separate <db>_test database and Redis db 1)
 pnpm lint && pnpm typecheck && pnpm test
 pnpm --filter backend test:e2e
 ```

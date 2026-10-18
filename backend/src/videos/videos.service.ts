@@ -25,7 +25,21 @@ export class VideosService {
     if (!published && !this.isOwnerOrAdmin(video, viewer)) {
       throw new NotFoundException('Video not found');
     }
-    return toVideoDto(video, this.media);
+    const [dto] = await this.toDtos([video], viewer?.id);
+    return dto!;
+  }
+
+  /** Maps rows to DTOs, filling `likedByMe` for the viewer with a single query. */
+  async toDtos(rows: VideoRow[], viewerId?: string): Promise<VideoDto[]> {
+    const liked = new Set<string>();
+    if (viewerId && rows.length) {
+      const likes = await this.prisma.like.findMany({
+        where: { userId: viewerId, videoId: { in: rows.map((r) => r.id) } },
+        select: { videoId: true },
+      });
+      for (const like of likes) liked.add(like.videoId);
+    }
+    return rows.map((row) => toVideoDto(row, this.media, liked.has(row.id)));
   }
 
   async update(id: string, actor: AuthUser, dto: UpdateVideoDto): Promise<VideoDto> {
@@ -38,7 +52,8 @@ export class VideosService {
       data: { caption: dto.caption ?? null },
       select: videoSelect,
     });
-    return toVideoDto(updated, this.media);
+    const [result] = await this.toDtos([updated], actor.id);
+    return result!;
   }
 
   /** Deletes the row now and cleans up at the provider through the queue (with retries). */
@@ -61,7 +76,11 @@ export class VideosService {
   }
 
   /** A creator's published videos, newest first. The cursor is the last video's id. */
-  async listByAuthor(authorId: string, query: PaginationQueryDto): Promise<Paginated<VideoDto>> {
+  async listByAuthor(
+    authorId: string,
+    query: PaginationQueryDto,
+    viewer?: AuthUser,
+  ): Promise<Paginated<VideoDto>> {
     await this.users.assertExists(authorId);
     const rows = await this.prisma.video.findMany({
       where: { authorId, status: 'READY', hidden: false },
@@ -70,12 +89,13 @@ export class VideosService {
       ...(query.cursor && { cursor: { id: query.cursor }, skip: 1 }),
       select: videoSelect,
     });
-    return toPage(
+    const page = toPage(
       rows,
       query.limit,
       (r) => r.id,
-      (r) => toVideoDto(r, this.media),
+      (r) => r,
     );
+    return { items: await this.toDtos(page.items, viewer?.id), nextCursor: page.nextCursor };
   }
 
   private async find(id: string): Promise<VideoRow> {

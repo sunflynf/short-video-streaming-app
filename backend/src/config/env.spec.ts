@@ -18,6 +18,10 @@ describe('validateEnv', () => {
       MAX_VIDEO_DURATION_SEC: 60,
       MAX_ACTIVE_UPLOADS: 3,
       MAX_DAILY_UPLOADS: 20,
+      FEED_SNAPSHOT_SIZE: 200,
+      FEED_WINDOW_DAYS: 14,
+      FEED_SNAPSHOT_TTL_SEC: 1800,
+      ANON_FEED_CACHE_SEC: 60,
     });
   });
 

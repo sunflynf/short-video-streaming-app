@@ -9,3 +9,15 @@ export function testDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
   url.pathname = `${url.pathname}_test`;
   return url.toString();
 }
+
+/**
+ * E2E tests use Redis db 1 (or TEST_REDIS_URL) so flushing it between tests never touches
+ * the dev queue, feed snapshots or rate-limit keys in db 0.
+ */
+export function testRedisUrl(env: NodeJS.ProcessEnv = process.env): string {
+  if (env.TEST_REDIS_URL) return env.TEST_REDIS_URL;
+  if (!env.REDIS_URL) throw new Error('REDIS_URL or TEST_REDIS_URL must be set');
+  const url = new URL(env.REDIS_URL);
+  url.pathname = '/1';
+  return url.toString();
+}

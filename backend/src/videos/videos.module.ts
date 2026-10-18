@@ -8,5 +8,6 @@ import { VideosService } from './videos.service.js';
   imports: [MediaModule, UsersModule],
   controllers: [VideosController, UserVideosController],
   providers: [VideosService],
+  exports: [VideosService],
 })
 export class VideosModule {}

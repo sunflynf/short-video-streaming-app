@@ -39,7 +39,11 @@ export class UserVideosController {
 
   @Public()
   @Get()
-  list(@Param('id') id: string, @Query() query: PaginationQueryDto): Promise<Paginated<VideoDto>> {
-    return this.videos.listByAuthor(id, query);
+  list(
+    @Param('id') id: string,
+    @Query() query: PaginationQueryDto,
+    @CurrentUser() viewer?: AuthUser,
+  ): Promise<Paginated<VideoDto>> {
+    return this.videos.listByAuthor(id, query, viewer);
   }
 }

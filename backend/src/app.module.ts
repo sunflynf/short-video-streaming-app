@@ -4,8 +4,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module.js';
 import { validateEnv, type Env } from './config/env.js';
+import { FeedModule } from './feed/feed.module.js';
 import { FollowsModule } from './follows/follows.module.js';
 import { HealthModule } from './health/health.module.js';
+import { LikesModule } from './likes/likes.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { UploadsModule } from './uploads/uploads.module.js';
@@ -29,7 +31,10 @@ import { VideosModule } from './videos/videos.module.js';
     UsersModule,
     FollowsModule,
     UploadsModule,
+    // Before VideosModule: GET /videos/feed must be registered ahead of GET /videos/:id.
+    FeedModule,
     VideosModule,
+    LikesModule,
   ],
 })
 export class AppModule {}
